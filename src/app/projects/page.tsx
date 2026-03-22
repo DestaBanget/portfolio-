@@ -29,7 +29,7 @@ export default async function ProjectsPage() {
   return (
     <section className="space-y-8">
       <header className="fade-step-0 space-y-3">
-        <p className="text-xs uppercase tracking-[0.28em] text-text-tertiary">Projects</p>
+        <p className="font-body text-xs uppercase tracking-widest text-text-tertiary">Projects</p>
         <h1 className="font-display text-4xl font-semibold tracking-tight text-text-primary">Project Library</h1>
       </header>
 

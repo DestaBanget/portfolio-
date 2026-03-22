@@ -22,7 +22,7 @@ export default async function ContactPage() {
       <div className="grid gap-10 md:grid-cols-2">
         <div className="space-y-5">
           <header className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.28em] text-text-tertiary">Contact</p>
+            <p className="font-body text-xs uppercase tracking-widest text-text-tertiary">Contact</p>
             <h1 className="font-display text-4xl font-semibold tracking-tight text-text-primary">Get in touch</h1>
           </header>
 

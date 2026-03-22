@@ -20,7 +20,7 @@ export default async function WriteupsPage() {
   return (
     <section className="space-y-8">
       <header className="space-y-3">
-        <p className="text-xs uppercase tracking-[0.28em] text-text-tertiary">Writeups</p>
+        <p className="font-body text-xs uppercase tracking-widest text-text-tertiary">Writeups</p>
         <h1 className="font-display text-4xl font-semibold tracking-tight text-text-primary">Knowledge Base</h1>
       </header>
 
