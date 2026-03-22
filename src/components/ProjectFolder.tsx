@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/Badge";
+import { Button } from "@/components/ui/Button";
 import type { Project } from "@/data/projects";
 
 interface ProjectFolderProps {
@@ -22,10 +23,12 @@ export function ProjectFolder({ project }: ProjectFolderProps) {
 
   return (
     <article className="surface-card fade-step-1 overflow-hidden">
-      <button
+      <Button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="w-full text-left"
+        variant="ghost"
+        size="md"
+        className="h-auto w-full justify-start border-0 p-0 text-left"
         aria-expanded={open}
       >
         <div className="relative p-5">
@@ -41,7 +44,7 @@ export function ProjectFolder({ project }: ProjectFolderProps) {
             {open ? "Folder open" : "Folder closed"} · {childCount} item{childCount === 1 ? "" : "s"}
           </p>
         </div>
-      </button>
+      </Button>
 
       <div
         className={`grid transition-all duration-300 ease-out ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}

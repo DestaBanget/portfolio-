@@ -1,4 +1,5 @@
 import { TerminalBlock } from "@/components/TerminalBlock";
+import { Button } from "@/components/ui/Button";
 import { supabase } from "@/lib/supabase";
 
 export default async function Home() {
@@ -45,23 +46,25 @@ export default async function Home() {
         </p>
 
         <div className="flex flex-wrap gap-3">
-          <a
-            href={cvUrl}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-light"
-          >
-            ↓ Download CV
-          </a>
-          <a
-            href={linkedIn}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden className="size-4 fill-current">
-              <path d="M6.94 8.5H3.56V20h3.38V8.5zM5.25 3A2.01 2.01 0 103 5.01 2 2 0 005.25 3zM20.44 13.22c0-3.36-1.79-4.92-4.17-4.92a3.6 3.6 0 00-3.23 1.78V8.5H9.66V20h3.38v-6.01c0-1.58.3-3.11 2.25-3.11 1.92 0 1.95 1.79 1.95 3.21V20h3.38z" />
-            </svg>
-            LinkedIn ↗
-          </a>
+          <form action={cvUrl}>
+            <Button variant="primary" size="lg" type="submit" icon={<span aria-hidden>↓</span>}>
+              Download CV
+            </Button>
+          </form>
+          <form action={linkedIn} target="_blank">
+            <Button
+              variant="outline"
+              size="lg"
+              type="submit"
+              icon={
+                <svg viewBox="0 0 24 24" aria-hidden className="size-4 fill-current">
+                  <path d="M6.94 8.5H3.56V20h3.38V8.5zM5.25 3A2.01 2.01 0 103 5.01 2 2 0 005.25 3zM20.44 13.22c0-3.36-1.79-4.92-4.17-4.92a3.6 3.6 0 00-3.23 1.78V8.5H9.66V20h3.38v-6.01c0-1.58.3-3.11 2.25-3.11 1.92 0 1.95 1.79 1.95 3.21V20h3.38z" />
+                </svg>
+              }
+            >
+              LinkedIn ↗
+            </Button>
+          </form>
         </div>
       </div>
 

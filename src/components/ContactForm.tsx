@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 type SendState = "idle" | "sending" | "sent" | "failed";
 
@@ -64,13 +65,20 @@ export function ContactForm() {
         required
         className="min-h-40 w-full rounded-md border border-border bg-surface px-3 py-2 text-text-primary outline-none transition-colors focus:border-accent"
       />
-      <button
+      <Button
         type="submit"
         disabled={state === "sending"}
-        className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-light disabled:opacity-60"
+        variant="primary"
+        size="lg"
+        icon={
+          <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path d="M4 7l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+          </svg>
+        }
       >
         {buttonText}
-      </button>
+      </Button>
     </form>
   );
 }

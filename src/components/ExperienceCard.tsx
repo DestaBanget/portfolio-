@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/Button";
  
 export interface ExperienceEntry {
   company: string;
@@ -51,13 +52,15 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
       >
         {experience.description}
       </p>
-      <button
+      <Button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="text-sm text-accent hover:text-accent-light hover:underline underline-offset-2 cursor-pointer"
+        variant="ghost"
+        size="sm"
+        className="mt-1 w-fit border-0 px-0 py-0 text-sm text-accent hover:text-accent-light hover:underline underline-offset-2"
       >
         {expanded ? "Show less" : "Show more"}
-      </button>
+      </Button>
 
       <p className="mt-5 text-xs tracking-wide text-text-muted">{experience.skills.join(" · ")}</p>
     </article>

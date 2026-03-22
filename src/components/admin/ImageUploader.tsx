@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { ChangeEvent, DragEventHandler } from "react";
+import { Button } from "@/components/ui/Button";
 
 interface ImageUploaderProps {
   folder?: string;
@@ -98,13 +99,14 @@ export function ImageUploader({ folder = "misc" }: ImageUploaderProps) {
             value={url}
             readOnly
           />
-          <button
+          <Button
             type="button"
             onClick={copyUrl}
-            className="rounded border border-border px-2 py-1 text-xs hover:text-accent"
+            variant="ghost"
+            size="sm"
           >
             {copied ? "Copied ✓" : "Copy"}
-          </button>
+          </Button>
         </div>
       ) : null}
 

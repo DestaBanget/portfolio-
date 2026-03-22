@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { RoomCard } from "@/components/RoomCard";
 import { htbMachines } from "@/data/htb";
+import { Button } from "@/components/ui/Button";
 
 const SESSION_KEY = "htb-unlocked";
 
@@ -61,12 +62,14 @@ export default function HtbPage() {
             autoComplete="off"
             required
           />
-          <button
+          <Button
             type="submit"
-            className="w-full rounded-md border border-border px-3 py-2 text-xs uppercase tracking-widest text-text-primary transition-colors hover:border-accent hover:text-accent"
+            variant="outline"
+            size="sm"
+            className="w-full"
           >
             Unlock
-          </button>
+          </Button>
           {error ? <p className="text-xs uppercase tracking-wider text-text-secondary">{error}</p> : null}
         </form>
       </section>

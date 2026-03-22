@@ -24,7 +24,7 @@ function toDuration(start: string, end: string | null) {
 }
 
 export default async function ExperiencePage() {
-  const { data } = await supabase.from("experience").select("*").order("order_index", { ascending: true });
+  const { data } = await supabase.from("experience").select("*").order("created_at", { ascending: false });
   const experiences: ExperienceEntry[] = (data ?? []).map((item) => ({
     company: item.company,
     role: item.role,

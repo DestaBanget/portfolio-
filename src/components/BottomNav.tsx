@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 interface NavItem {
   href: string;
@@ -119,11 +120,13 @@ export function BottomNav() {
 
       <span className="mx-1 h-5 w-px bg-border" aria-hidden />
 
-      <button
+      <Button
         type="button"
         onClick={() => setTheme(isLight ? "dark" : "light")}
         aria-label="Toggle color theme"
-        className="relative flex size-11 items-center justify-center rounded-xl text-text-secondary transition-transform duration-150 hover:scale-110 hover:text-accent"
+        variant="ghost"
+        size="sm"
+        className="relative size-11 border-0 px-0 py-0 text-text-secondary transition-transform duration-150 hover:scale-110 hover:text-accent"
       >
         {mounted ? (
           isLight ? (
@@ -141,7 +144,7 @@ export function BottomNav() {
             </svg>
           )
         ) : null}
-      </button>
+      </Button>
     </nav>
   );
 }

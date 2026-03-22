@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ImageUploader } from "./ImageUploader";
+import { Button } from "@/components/ui/Button";
 
 type SectionKey = "profile" | "contact" | "experience" | "writeups" | "projects";
 
@@ -281,15 +282,17 @@ export function DashboardClient() {
       <aside className="w-56 shrink-0 rounded-xl border border-border bg-surface p-4">
         <nav className="space-y-1">
           {sections.map((s) => (
-            <button
+            <Button
               key={s.key}
               onClick={() => setActive(s.key)}
-              className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
-                active === s.key ? "bg-accent text-white" : "text-text-secondary hover:bg-surface-raised"
+              variant={active === s.key ? "outline" : "ghost"}
+              size="sm"
+              className={`w-full justify-start ${
+                active === s.key ? "bg-accent text-white hover:text-white" : ""
               }`}
             >
               {s.label}
-            </button>
+            </Button>
           ))}
         </nav>
       </aside>
@@ -301,9 +304,9 @@ export function DashboardClient() {
             <Link href="/" target="_blank" className="text-sm text-accent hover:text-accent-light">
               View Site ↗
             </Link>
-            <button onClick={logout} className="rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:text-accent">
+            <Button onClick={logout} variant="ghost" size="sm">
               Logout
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -334,8 +337,9 @@ export function DashboardClient() {
               onChange={(e) => setProfile({ ...profile, terminal_lines: e.target.value.split("\n") })}
               placeholder="Terminal lines (one per line)"
             />
-            <button
-              className="rounded-md bg-accent px-4 py-2 text-white"
+            <Button
+              variant="primary"
+              size="md"
               disabled={saving}
               onClick={async () => {
                 try {
@@ -353,7 +357,7 @@ export function DashboardClient() {
               }}
             >
               {saving ? "Saving..." : "Save"}
-            </button>
+            </Button>
           </section>
         ) : null}
 
@@ -391,8 +395,9 @@ export function DashboardClient() {
                 placeholder="WhatsApp (optional)"
               />
             </div>
-            <button
-              className="rounded-md bg-accent px-4 py-2 text-white"
+            <Button
+              variant="primary"
+              size="md"
               onClick={async () => {
                 try {
                   await request("/loginytta/api/profile", {
@@ -407,17 +412,18 @@ export function DashboardClient() {
               }}
             >
               Save
-            </button>
+            </Button>
           </section>
         ) : null}
 
         {active === "experience" ? (
           <section className="space-y-4">
             <div className="flex justify-end">
-              <button className="rounded-md border border-border px-3 py-2 text-sm hover:text-accent" onClick={addExperience}>
+              <Button variant="outline" size="sm" onClick={addExperience}>
                 Add new
-              </button>
+              </Button>
             </div>
+            <p className="text-xs text-text-muted">Most recently added appears first on the public page</p>
             <div className="space-y-4">
               {experience.map((item) => (
                 <div key={item.id} className="rounded-lg border border-border p-4">
@@ -430,10 +436,10 @@ export function DashboardClient() {
                     <input type="date" className="rounded border border-border bg-surface-raised px-2 py-1" value={item.period_end ?? ""} onChange={(e) => setExperience((prev) => prev.map((x) => (x.id === item.id ? { ...x, period_end: e.target.value || null } : x)))} />
                   </div>
                   <textarea className="mt-2 min-h-20 w-full rounded border border-border bg-surface-raised px-2 py-1" value={item.description ?? ""} onChange={(e) => setExperience((prev) => prev.map((x) => (x.id === item.id ? { ...x, description: e.target.value } : x)))} placeholder="Description" />
-                  <input className="mt-2 w-full rounded border border-border bg-surface-raised px-2 py-1" value={(item.skills ?? []).join(", ")} onChange={(e) => setExperience((prev) => prev.map((x) => (x.id === item.id ? { ...x, skills: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) } : x)))} placeholder="Skills (comma separated)" />
                   <div className="mt-3 flex gap-2">
-                    <button
-                      className="rounded border border-border px-3 py-1 text-sm hover:text-accent"
+                    <Button
+                      variant="primary"
+                      size="md"
                       onClick={async () => {
                         try {
                           await request(`/loginytta/api/experience/${item.id}`, {
@@ -448,9 +454,10 @@ export function DashboardClient() {
                       }}
                     >
                       Save
-                    </button>
-                    <button
-                      className="rounded border border-border px-3 py-1 text-sm text-red-400"
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={async () => {
                         try {
                           await request(`/loginytta/api/experience/${item.id}`, { method: "DELETE" });
@@ -462,7 +469,7 @@ export function DashboardClient() {
                       }}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -473,9 +480,9 @@ export function DashboardClient() {
         {active === "writeups" ? (
           <section className="space-y-4">
             <div className="flex justify-end">
-              <button className="rounded-md border border-border px-3 py-2 text-sm hover:text-accent" onClick={addPath}>
+              <Button variant="outline" size="sm" onClick={addPath}>
                 Add Path
-              </button>
+              </Button>
             </div>
             <div className="space-y-4">
               {paths.map((path) => (
@@ -490,7 +497,7 @@ export function DashboardClient() {
                     </select>
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <button className="rounded border border-border px-3 py-1 text-sm hover:text-accent" onClick={async () => {
+                    <Button variant="primary" size="md" onClick={async () => {
                       try {
                         await request(`/loginytta/api/writeups/paths/${path.id}`, { method: "PATCH", body: JSON.stringify(path) });
                         await loadAll();
@@ -498,9 +505,9 @@ export function DashboardClient() {
                       } catch (error) {
                         showError(error);
                       }
-                    }}>Save Path</button>
-                    <button className="rounded border border-border px-3 py-1 text-sm" onClick={() => addSection(path.id)}>Add Section</button>
-                    <button className="rounded border border-border px-3 py-1 text-sm text-red-400" onClick={async () => {
+                    }}>Save Path</Button>
+                    <Button variant="outline" size="sm" onClick={() => addSection(path.id)}>Add Section</Button>
+                    <Button variant="danger" size="sm" onClick={async () => {
                       try {
                         await request(`/loginytta/api/writeups/paths/${path.id}`, { method: "DELETE" });
                         await loadAll();
@@ -508,7 +515,7 @@ export function DashboardClient() {
                       } catch (error) {
                         showError(error);
                       }
-                    }}>Delete Path</button>
+                    }}>Delete Path</Button>
                   </div>
 
                   <div className="mt-4 space-y-3 border-l border-border pl-4">
@@ -516,7 +523,7 @@ export function DashboardClient() {
                       <div key={section.id} className="rounded border border-border p-3">
                         <input className="w-full rounded border border-border bg-surface-raised px-2 py-1" value={section.title} onChange={(e) => setSectionsData((prev) => prev.map((x) => (x.id === section.id ? { ...x, title: e.target.value } : x)))} />
                         <div className="mt-2 flex gap-2">
-                          <button className="rounded border border-border px-2 py-1 text-xs" onClick={async () => {
+                          <Button variant="primary" size="sm" onClick={async () => {
                             try {
                               await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "PATCH", body: JSON.stringify(section) });
                               await loadAll();
@@ -524,9 +531,9 @@ export function DashboardClient() {
                             } catch (error) {
                               showError(error);
                             }
-                          }}>Save Section</button>
-                          <button className="rounded border border-border px-2 py-1 text-xs" onClick={() => addRoom(section.id)}>Add Room</button>
-                          <button className="rounded border border-border px-2 py-1 text-xs text-red-400" onClick={async () => {
+                          }}>Save Section</Button>
+                          <Button variant="outline" size="sm" onClick={() => addRoom(section.id)}>Add Room</Button>
+                          <Button variant="danger" size="sm" onClick={async () => {
                             try {
                               await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "DELETE" });
                               await loadAll();
@@ -534,7 +541,7 @@ export function DashboardClient() {
                             } catch (error) {
                               showError(error);
                             }
-                          }}>Delete Section</button>
+                          }}>Delete Section</Button>
                         </div>
 
                         <div className="mt-3 space-y-2 border-l border-border pl-3">
@@ -565,7 +572,7 @@ export function DashboardClient() {
                                 <p className="text-xs text-text-tertiary">Copy the URL above and use it in markdown as: ![description](url)</p>
                               </div>
                               <div className="mt-2 flex gap-2">
-                                <button className="rounded border border-border px-2 py-1 text-xs" onClick={async () => {
+                                <Button variant="primary" size="sm" onClick={async () => {
                                   try {
                                     await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "PATCH", body: JSON.stringify(room) });
                                     await loadAll();
@@ -573,8 +580,8 @@ export function DashboardClient() {
                                   } catch (error) {
                                     showError(error);
                                   }
-                                }}>Save Room</button>
-                                <button className="rounded border border-border px-2 py-1 text-xs text-red-400" onClick={async () => {
+                                }}>Save Room</Button>
+                                <Button variant="danger" size="sm" onClick={async () => {
                                   try {
                                     await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "DELETE" });
                                     await loadAll();
@@ -582,7 +589,7 @@ export function DashboardClient() {
                                   } catch (error) {
                                     showError(error);
                                   }
-                                }}>Delete Room</button>
+                                }}>Delete Room</Button>
                               </div>
                             </div>
                           ))}
@@ -599,9 +606,9 @@ export function DashboardClient() {
         {active === "projects" ? (
           <section className="space-y-4">
             <div className="flex justify-end">
-              <button className="rounded-md border border-border px-3 py-2 text-sm hover:text-accent" onClick={addProject}>
+              <Button variant="outline" size="sm" onClick={addProject}>
                 Add new
-              </button>
+              </Button>
             </div>
             <div className="space-y-4">
               {projects.map((project) => (
@@ -619,7 +626,7 @@ export function DashboardClient() {
                   <textarea className="mt-2 min-h-20 w-full rounded border border-border bg-surface-raised px-2 py-1" value={project.description ?? ""} onChange={(e) => setProjects((prev) => prev.map((x) => (x.id === project.id ? { ...x, description: e.target.value } : x)))} placeholder="Description" />
                   <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={project.is_public} onChange={(e) => setProjects((prev) => prev.map((x) => (x.id === project.id ? { ...x, is_public: e.target.checked } : x)))} /> Public</label>
                   <div className="mt-3 flex gap-2">
-                    <button className="rounded border border-border px-3 py-1 text-sm hover:text-accent" onClick={async () => {
+                    <Button variant="primary" size="md" onClick={async () => {
                       try {
                         await request(`/loginytta/api/projects/${project.id}`, { method: "PATCH", body: JSON.stringify(project) });
                         await loadAll();
@@ -627,8 +634,8 @@ export function DashboardClient() {
                       } catch (error) {
                         showError(error);
                       }
-                    }}>Save</button>
-                    <button className="rounded border border-border px-3 py-1 text-sm text-red-400" onClick={async () => {
+                    }}>Save</Button>
+                    <Button variant="danger" size="sm" onClick={async () => {
                       try {
                         await request(`/loginytta/api/projects/${project.id}`, { method: "DELETE" });
                         await loadAll();
@@ -636,7 +643,7 @@ export function DashboardClient() {
                       } catch (error) {
                         showError(error);
                       }
-                    }}>Delete</button>
+                    }}>Delete</Button>
                   </div>
                 </div>
               ))}

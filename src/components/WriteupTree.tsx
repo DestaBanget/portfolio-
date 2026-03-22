@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 interface WriteupPath {
   id: string;
@@ -74,9 +75,11 @@ export function WriteupTree({ paths, sections, rooms }: WriteupTreeProps) {
         const pathSections = sectionsByPath.get(path.id) ?? [];
         return (
           <div key={path.id} className="surface-card overflow-hidden">
-            <button
+            <Button
               onClick={() => setOpenPaths((prev) => ({ ...prev, [path.id]: !pathOpen }))}
-              className="flex w-full items-center justify-between gap-2 p-4 text-left"
+              variant="ghost"
+              size="md"
+              className="h-auto w-full justify-between border-0 p-4 text-left"
             >
               <div className="flex items-center gap-3">
                 <span className="text-lg">📁</span>
@@ -84,7 +87,7 @@ export function WriteupTree({ paths, sections, rooms }: WriteupTreeProps) {
                 <span className={`rounded-full border px-2 py-0.5 text-xs ${platformTone[path.platform]}`}>{path.platform}</span>
               </div>
               <span className="text-text-secondary">{pathOpen ? "−" : "+"}</span>
-            </button>
+            </Button>
 
             <div className={`grid transition-all duration-300 ${pathOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
               <div className="overflow-hidden">
@@ -95,16 +98,18 @@ export function WriteupTree({ paths, sections, rooms }: WriteupTreeProps) {
 
                     return (
                       <div key={section.id} className="mb-3 last:mb-0 rounded-lg border border-border bg-surface-raised/40">
-                        <button
+                        <Button
                           onClick={() => setOpenSections((prev) => ({ ...prev, [section.id]: !sectionOpen }))}
-                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto w-full justify-between border-0 px-3 py-2 text-left"
                         >
                           <div className="flex items-center gap-2">
                             <span>📂</span>
                             <span className="text-sm font-medium text-text-primary">{section.title}</span>
                           </div>
                           <span className="text-text-secondary">{sectionOpen ? "−" : "+"}</span>
-                        </button>
+                        </Button>
 
                         <div className={`grid transition-all duration-300 ${sectionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                           <div className="overflow-hidden">
