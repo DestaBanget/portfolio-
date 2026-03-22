@@ -42,7 +42,19 @@ export default async function WriteupRoomPage({ params }: RoomPageProps) {
       </header>
 
       <div className="surface-card p-6 prose prose-invert max-w-none prose-p:text-text-secondary prose-headings:text-text-primary">
-        <ReactMarkdown>{room.content || "No content available."}</ReactMarkdown>
+        <ReactMarkdown
+          components={{
+            img: ({ src, alt }) => (
+              <img
+                src={src}
+                alt={alt || ""}
+                className="rounded-lg my-4 max-w-full border border-border"
+              />
+            ),
+          }}
+        >
+          {room.content || "No content available."}
+        </ReactMarkdown>
       </div>
     </article>
   );

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { ImageUploader } from "./ImageUploader";
 
 type SectionKey = "profile" | "contact" | "experience" | "writeups" | "projects";
 
@@ -95,6 +96,15 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   }
 
   return res.json() as Promise<T>;
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-") || "misc";
 }
 
 export function DashboardClient() {
@@ -450,6 +460,10 @@ export function DashboardClient() {
                               </div>
                               <input className="mt-2 w-full rounded border border-border bg-surface-raised px-2 py-1" value={(room.tags ?? []).join(", ")} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) } : x)))} placeholder="tags (comma separated)" />
                               <textarea className="mt-2 min-h-28 w-full rounded border border-border bg-surface-raised px-2 py-1 font-mono text-sm" value={room.content ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, content: e.target.value } : x)))} placeholder="Markdown content" />
+                              <div className="mt-2 space-y-2">
+                                <ImageUploader folder={slugify(room.title)} />
+                                <p className="text-xs text-text-tertiary">Copy the URL above and use it in markdown as: ![description](url)</p>
+                              </div>
                               <div className="mt-2 flex gap-2">
                                 <button className="rounded border border-border px-2 py-1 text-xs" onClick={async () => { await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "PATCH", body: JSON.stringify(room) }); await loadAll(); }}>Save Room</button>
                                 <button className="rounded border border-border px-2 py-1 text-xs text-red-400" onClick={async () => { await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "DELETE" }); await loadAll(); }}>Delete Room</button>

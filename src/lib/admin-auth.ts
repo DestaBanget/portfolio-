@@ -5,8 +5,21 @@ const SESSION_COOKIE = "admin_session";
 const SESSION_VALUE = process.env.ADMIN_SESSION_SECRET!;
 
 export function isAdminAuthenticated(): boolean {
-  const cookieStore = cookies();
-  return cookieStore.get(SESSION_COOKIE)?.value === SESSION_VALUE;
+  try {
+    const cookieStore = cookies();
+    const cookie = cookieStore.get(SESSION_COOKIE);
+
+    console.log("[admin-auth] cookie", {
+      cookieValue: cookie?.value ?? null,
+      sessionValue: SESSION_VALUE ?? null,
+      nodeEnv: process.env.NODE_ENV,
+    });
+
+    return cookie?.value === SESSION_VALUE;
+  } catch (error) {
+    console.error("[admin-auth] failed to read cookies", error);
+    return false;
+  }
 }
 
 export function requireAdmin() {

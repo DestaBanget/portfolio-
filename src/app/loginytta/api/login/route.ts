@@ -26,9 +26,9 @@ export async function POST(req: NextRequest) {
   res.cookies.set(ADMIN_SESSION_COOKIE, process.env.ADMIN_SESSION_SECRET!, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 60 * 60 * 24 * 7,
+    sameSite: "lax",
     path: "/",
+    maxAge: 60 * 60 * 24 * 7,
   });
   return res;
 }
