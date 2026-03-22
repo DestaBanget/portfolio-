@@ -1,16 +1,16 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function SecretLoginPage() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [shaking, setShaking] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setErrorMessage("");
     setLoading(true);
 
     const res = await fetch("/loginytta/api/login", {
@@ -24,11 +24,12 @@ export default function SecretLoginPage() {
     if (!res.ok) {
       setShaking(true);
       setTimeout(() => setShaking(false), 350);
+      setErrorMessage("Wrong password");
       setPassword("");
       return;
     }
 
-    router.push("/loginytta/dashboard");
+    window.location.href = "/loginytta/dashboard";
   };
 
   return (
@@ -46,6 +47,8 @@ export default function SecretLoginPage() {
         <button type="submit" disabled={loading} className="sr-only">
           submit
         </button>
+        {loading ? <p className="mt-3 text-sm text-text-secondary">Checking password...</p> : null}
+        {errorMessage ? <p className="mt-3 text-sm text-red-400">{errorMessage}</p> : null}
       </form>
     </main>
   );
