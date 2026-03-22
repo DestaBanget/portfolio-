@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --border: #253047;
+  --text-primary: #ffffff;
+  --text-secondary: #c9d1d9;
+  --text-tertiary: #8b949e;
+  --text-muted: #6e7681;
+  --accent: #4d7eff;
+  --accent-light: #7aa3ff;
+  --accent-warm: #f97316;
+  --accent-green: #22c55e;
+}
+
+html.light {
+  --bg: #f0f4f8;
+  --surface: #ffffff;
+  --border: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #1e293b;
+  --text-tertiary: #475569;
+  --text-muted: #64748b;
+  --accent: #1d4ed8;
+  --accent-light: #3b82f6;
+  --accent-warm: #ea580c;
+  --accent-green: #16a34a;
+}
+
+body {
+  position: relative;
+  overflow-x: hidden;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  background-image: radial-gradient(circle, rgba(37, 48, 71, 0.4) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.hero-name {
+  text-shadow: none;
+}
+
+.dark .hero-name {
+  text-shadow: 0 2px 60px rgba(0, 0, 0, 1), 0 1px 12px rgba(0, 0, 0, 1);
+}
+
+html.light .home-role-chip {
+  color: #111827;
+  border-color: #111827;
+  background: transparent;
+}
+
+html.dark .home-role-chip {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: #ffffff;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-xl border border-border bg-surface shadow-card transition-all duration-150;
+  }
+
+  .surface-card-hover {
+    @apply hover:-translate-y-0.5 hover:border-accent-light;
+  }
+
+  .section-divider {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(90deg, rgba(47, 93, 227, 0.8), rgba(47, 93, 227, 0));
+  }
+
+  .fade-step-0 {
+    animation: fadeIn 420ms ease-out both;
+    animation-delay: 0ms;
+  }
+
+  .fade-step-1 {
+    animation: fadeIn 420ms ease-out both;
+    animation-delay: 100ms;
+  }
+
+  .fade-step-2 {
+    animation: fadeIn 420ms ease-out both;
+    animation-delay: 200ms;
+  }
+}
+
+@keyframes drift1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(130px, 90px) scale(1.2);
+  }
+}
+
+@keyframes drift2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-110px, -70px) scale(1.1);
+  }
+}
