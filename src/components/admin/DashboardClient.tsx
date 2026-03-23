@@ -44,18 +44,11 @@ interface ProjectRow {
   order_index: number;
 }
 
-interface PathRow {
+interface SectionRow {
   id: string;
   title: string;
   platform: "THM" | "HTB" | "CTF" | "Other";
-  order_index: number;
-}
-
-interface SectionRow {
-  id: string;
-  path_id: string;
-  title: string;
-  order_index: number;
+  order_index_global: number;
 }
 
 interface RoomRow {
@@ -115,7 +108,6 @@ export function DashboardClient() {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [experience, setExperience] = useState<ExperienceRow[]>([]);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
-  const [paths, setPaths] = useState<PathRow[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionRow[]>([]);
   const [rooms, setRooms] = useState<RoomRow[]>([]);
 
@@ -128,11 +120,10 @@ export function DashboardClient() {
   };
 
   const loadAll = async () => {
-    const [profileRow, expRows, projectRows, pathRows, sectionRows, roomRows] = await Promise.all([
+    const [profileRow, expRows, projectRows, sectionRows, roomRows] = await Promise.all([
       request<ProfileRow>("/loginytta/api/profile"),
       request<ExperienceRow[]>("/loginytta/api/experience"),
       request<ProjectRow[]>("/loginytta/api/projects"),
-      request<PathRow[]>("/loginytta/api/writeups/paths"),
       request<SectionRow[]>("/loginytta/api/writeups/sections"),
       request<RoomRow[]>("/loginytta/api/writeups/rooms"),
     ]);
@@ -140,7 +131,6 @@ export function DashboardClient() {
     setProfile(profileRow);
     setExperience(expRows);
     setProjects(projectRows);
-    setPaths(pathRows);
     setSectionsData(sectionRows);
     setRooms(roomRows);
   };
@@ -155,16 +145,10 @@ export function DashboardClient() {
     return () => clearTimeout(timeout);
   }, [notice]);
 
-  const sectionsByPath = useMemo(() => {
-    const map = new Map<string, SectionRow[]>();
-    for (const section of sectionsData) {
-      map.set(section.path_id, [...(map.get(section.path_id) ?? []), section]);
-    }
-    map.forEach((v, k) => {
-      map.set(k, [...v].sort((a, b) => a.order_index - b.order_index));
-    });
-    return map;
-  }, [sectionsData]);
+  const sortedSections = useMemo(
+    () => [...sectionsData].sort((a, b) => (a.order_index_global ?? 0) - (b.order_index_global ?? 0)),
+    [sectionsData],
+  );
 
   const roomsBySection = useMemo(() => {
     const map = new Map<string, RoomRow[]>();
@@ -226,24 +210,15 @@ export function DashboardClient() {
     }
   };
 
-  const addPath = async () => {
-    try {
-      await request("/loginytta/api/writeups/paths", {
-        method: "POST",
-        body: JSON.stringify({ title: "New Path", platform: "THM", order_index: paths.length }),
-      });
-      await loadAll();
-      showSuccess("Path added successfully");
-    } catch (error) {
-      showError(error);
-    }
-  };
-
-  const addSection = async (pathId: string) => {
+  const addSection = async () => {
     try {
       await request("/loginytta/api/writeups/sections", {
         method: "POST",
-        body: JSON.stringify({ path_id: pathId, title: "New Section", order_index: (sectionsByPath.get(pathId) ?? []).length }),
+        body: JSON.stringify({
+          title: "New Section",
+          platform: "THM",
+          order_index_global: sectionsData.length,
+        }),
       });
       await loadAll();
       showSuccess("Section added successfully");
@@ -480,16 +455,31 @@ export function DashboardClient() {
         {active === "writeups" ? (
           <section className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={addPath}>
-                Add Path
+              <Button variant="outline" size="sm" onClick={addSection}>
+                Add Section
               </Button>
             </div>
             <div className="space-y-4">
-              {paths.map((path) => (
-                <div key={path.id} className="rounded-lg border border-border p-4">
+              {sortedSections.map((section) => (
+                <div key={section.id} className="rounded-lg border border-border p-4">
                   <div className="grid gap-2 md:grid-cols-2">
-                    <input className="rounded border border-border bg-surface-raised px-2 py-1" value={path.title} onChange={(e) => setPaths((prev) => prev.map((x) => (x.id === path.id ? { ...x, title: e.target.value } : x)))} placeholder="Path title" />
-                    <select className="rounded border border-border bg-surface-raised px-2 py-1" value={path.platform} onChange={(e) => setPaths((prev) => prev.map((x) => (x.id === path.id ? { ...x, platform: e.target.value as PathRow["platform"] } : x)))}>
+                    <input
+                      className="rounded border border-border bg-surface-raised px-2 py-1"
+                      value={section.title}
+                      onChange={(e) => setSectionsData((prev) => prev.map((x) => (x.id === section.id ? { ...x, title: e.target.value } : x)))}
+                      placeholder="Section title"
+                    />
+                    <select
+                      className="rounded border border-border bg-surface-raised px-2 py-1"
+                      value={section.platform}
+                      onChange={(e) =>
+                        setSectionsData((prev) =>
+                          prev.map((x) =>
+                            x.id === section.id ? { ...x, platform: e.target.value as SectionRow["platform"] } : x,
+                          ),
+                        )
+                      }
+                    >
                       <option>THM</option>
                       <option>HTB</option>
                       <option>CTF</option>
@@ -497,102 +487,87 @@ export function DashboardClient() {
                     </select>
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <Button variant="primary" size="md" onClick={async () => {
-                      try {
-                        await request(`/loginytta/api/writeups/paths/${path.id}`, { method: "PATCH", body: JSON.stringify(path) });
-                        await loadAll();
-                        showSuccess("Path saved successfully");
-                      } catch (error) {
-                        showError(error);
-                      }
-                    }}>Save Path</Button>
-                    <Button variant="outline" size="sm" onClick={() => addSection(path.id)}>Add Section</Button>
-                    <Button variant="danger" size="sm" onClick={async () => {
-                      try {
-                        await request(`/loginytta/api/writeups/paths/${path.id}`, { method: "DELETE" });
-                        await loadAll();
-                        showSuccess("Path deleted successfully");
-                      } catch (error) {
-                        showError(error);
-                      }
-                    }}>Delete Path</Button>
+                    <Button
+                      variant="primary"
+                      size="md"
+                      onClick={async () => {
+                        try {
+                          await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "PATCH", body: JSON.stringify(section) });
+                          await loadAll();
+                          showSuccess("Section saved successfully");
+                        } catch (error) {
+                          showError(error);
+                        }
+                      }}
+                    >
+                      Save Section
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => addRoom(section.id)}>
+                      Add Room
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "DELETE" });
+                          await loadAll();
+                          showSuccess("Section deleted successfully");
+                        } catch (error) {
+                          showError(error);
+                        }
+                      }}
+                    >
+                      Delete Section
+                    </Button>
                   </div>
 
-                  <div className="mt-4 space-y-3 border-l border-border pl-4">
-                    {(sectionsByPath.get(path.id) ?? []).map((section) => (
-                      <div key={section.id} className="rounded border border-border p-3">
-                        <input className="w-full rounded border border-border bg-surface-raised px-2 py-1" value={section.title} onChange={(e) => setSectionsData((prev) => prev.map((x) => (x.id === section.id ? { ...x, title: e.target.value } : x)))} />
+                  <div className="mt-3 space-y-2 border-l border-border pl-3">
+                    {(roomsBySection.get(section.id) ?? []).map((room) => (
+                      <div key={room.id} className="rounded border border-border p-3">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <input className="w-full rounded border border-border bg-surface-raised px-2 py-1" value={room.title} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, title: e.target.value } : x)))} />
+                          <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-3">
+                          <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.difficulty ?? "Easy"} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, difficulty: e.target.value as RoomRow["difficulty"] } : x)))}>
+                            <option>Easy</option><option>Medium</option><option>Hard</option><option>Insane</option>
+                          </select>
+                          <input className="rounded border border-border bg-surface-raised px-2 py-1" value={room.os ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, os: e.target.value } : x)))} placeholder="OS" />
+                          <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.status} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, status: e.target.value as RoomRow["status"] } : x)))}>
+                            <option value="in-progress">in-progress</option>
+                            <option value="completed">completed</option>
+                          </select>
+                        </div>
+                        <div className="mt-2 flex gap-3 text-xs">
+                          <label className="flex items-center gap-1"><input type="checkbox" checked={room.is_public} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, is_public: e.target.checked } : x)))} /> public</label>
+                          <label className="flex items-center gap-1"><input type="checkbox" checked={room.retired} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, retired: e.target.checked } : x)))} /> retired</label>
+                        </div>
+                        <input className="mt-2 w-full rounded border border-border bg-surface-raised px-2 py-1" value={(room.tags ?? []).join(", ")} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) } : x)))} placeholder="tags (comma separated)" />
+                        <textarea className="mt-2 min-h-28 w-full rounded border border-border bg-surface-raised px-2 py-1 font-mono text-sm" value={room.content ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, content: e.target.value } : x)))} placeholder="Markdown content" />
+                        <div className="mt-2 space-y-2">
+                          <ImageUploader folder={slugify(room.title)} />
+                          <p className="text-xs text-text-tertiary">Copy the URL above and use it in markdown as: ![description](url)</p>
+                        </div>
                         <div className="mt-2 flex gap-2">
                           <Button variant="primary" size="sm" onClick={async () => {
                             try {
-                              await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "PATCH", body: JSON.stringify(section) });
+                              await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "PATCH", body: JSON.stringify(room) });
                               await loadAll();
-                              showSuccess("Section saved successfully");
+                              showSuccess("Room saved successfully");
                             } catch (error) {
                               showError(error);
                             }
-                          }}>Save Section</Button>
-                          <Button variant="outline" size="sm" onClick={() => addRoom(section.id)}>Add Room</Button>
+                          }}>Save Room</Button>
                           <Button variant="danger" size="sm" onClick={async () => {
                             try {
-                              await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "DELETE" });
+                              await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "DELETE" });
                               await loadAll();
-                              showSuccess("Section deleted successfully");
+                              showSuccess("Room deleted successfully");
                             } catch (error) {
                               showError(error);
                             }
-                          }}>Delete Section</Button>
-                        </div>
-
-                        <div className="mt-3 space-y-2 border-l border-border pl-3">
-                          {(roomsBySection.get(section.id) ?? []).map((room) => (
-                            <div key={room.id} className="rounded border border-border p-3">
-                              <div className="mb-2 flex items-center justify-between gap-2">
-                                <input className="w-full rounded border border-border bg-surface-raised px-2 py-1" value={room.title} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, title: e.target.value } : x)))} />
-                                <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
-                              </div>
-                              <div className="grid gap-2 md:grid-cols-3">
-                                <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.difficulty ?? "Easy"} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, difficulty: e.target.value as RoomRow["difficulty"] } : x)))}>
-                                  <option>Easy</option><option>Medium</option><option>Hard</option><option>Insane</option>
-                                </select>
-                                <input className="rounded border border-border bg-surface-raised px-2 py-1" value={room.os ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, os: e.target.value } : x)))} placeholder="OS" />
-                                <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.status} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, status: e.target.value as RoomRow["status"] } : x)))}>
-                                  <option value="in-progress">in-progress</option>
-                                  <option value="completed">completed</option>
-                                </select>
-                              </div>
-                              <div className="mt-2 flex gap-3 text-xs">
-                                <label className="flex items-center gap-1"><input type="checkbox" checked={room.is_public} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, is_public: e.target.checked } : x)))} /> public</label>
-                                <label className="flex items-center gap-1"><input type="checkbox" checked={room.retired} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, retired: e.target.checked } : x)))} /> retired</label>
-                              </div>
-                              <input className="mt-2 w-full rounded border border-border bg-surface-raised px-2 py-1" value={(room.tags ?? []).join(", ")} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) } : x)))} placeholder="tags (comma separated)" />
-                              <textarea className="mt-2 min-h-28 w-full rounded border border-border bg-surface-raised px-2 py-1 font-mono text-sm" value={room.content ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, content: e.target.value } : x)))} placeholder="Markdown content" />
-                              <div className="mt-2 space-y-2">
-                                <ImageUploader folder={slugify(room.title)} />
-                                <p className="text-xs text-text-tertiary">Copy the URL above and use it in markdown as: ![description](url)</p>
-                              </div>
-                              <div className="mt-2 flex gap-2">
-                                <Button variant="primary" size="sm" onClick={async () => {
-                                  try {
-                                    await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "PATCH", body: JSON.stringify(room) });
-                                    await loadAll();
-                                    showSuccess("Room saved successfully");
-                                  } catch (error) {
-                                    showError(error);
-                                  }
-                                }}>Save Room</Button>
-                                <Button variant="danger" size="sm" onClick={async () => {
-                                  try {
-                                    await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "DELETE" });
-                                    await loadAll();
-                                    showSuccess("Room deleted successfully");
-                                  } catch (error) {
-                                    showError(error);
-                                  }
-                                }}>Delete Room</Button>
-                              </div>
-                            </div>
-                          ))}
+                          }}>Delete Room</Button>
                         </div>
                       </div>
                     ))}

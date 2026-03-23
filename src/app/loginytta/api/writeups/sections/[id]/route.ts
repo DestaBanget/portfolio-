@@ -13,7 +13,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const payload = await req.json();
   const { data, error } = await supabaseAdmin
     .from("wu_sections")
-    .update({ path_id: payload.path_id, title: payload.title, order_index: payload.order_index ?? 0 })
+    .update({
+      title: payload.title,
+      platform: payload.platform ?? "THM",
+      order_index_global: payload.order_index_global ?? 0,
+    })
     .eq("id", params.id)
     .select("*")
     .single();

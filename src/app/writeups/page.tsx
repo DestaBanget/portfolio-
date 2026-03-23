@@ -6,9 +6,8 @@ export default async function WriteupsPage() {
   const isAdmin = isAdminAuthenticated();
   const db = isAdmin ? supabaseAdmin : supabase;
 
-  const [{ data: paths }, { data: sections }, { data: rooms }] = await Promise.all([
-    db.from("wu_paths").select("id,title,platform,order_index").order("order_index", { ascending: true }),
-    db.from("wu_sections").select("id,path_id,title,order_index").order("order_index", { ascending: true }),
+  const [{ data: sections }, { data: rooms }] = await Promise.all([
+    db.from("wu_sections").select("id,title,platform,order_index_global").order("order_index_global", { ascending: true }),
     db
       .from("wu_rooms")
       .select("id,section_id,title,content,difficulty,status,is_public,order_index")
@@ -26,7 +25,7 @@ export default async function WriteupsPage() {
 
       <hr className="section-divider" />
 
-      <WriteupTree paths={paths ?? []} sections={sections ?? []} rooms={visibleRooms} />
+      <WriteupTree sections={sections ?? []} rooms={visibleRooms} />
     </section>
   );
 }
