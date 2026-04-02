@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { supabase } from "@/lib/supabase";
+import { unstable_noStore as noStore } from "next/cache";
 
 interface RoomPageProps {
   params: { roomId: string };
 }
 
 export default async function WriteupRoomPage({ params }: RoomPageProps) {
+  noStore();
   const { data: room } = await supabase
     .from("wu_rooms")
     .select("id,title,content,difficulty,tags,completed_at,is_public,section_id")

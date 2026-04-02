@@ -1,8 +1,10 @@
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { WriteupTree } from "@/components/WriteupTree";
+import { unstable_noStore as noStore } from "next/cache";
 
 export default async function WriteupsPage() {
+  noStore();
   const isAdmin = isAdminAuthenticated();
   const db = isAdmin ? supabaseAdmin : supabase;
 
