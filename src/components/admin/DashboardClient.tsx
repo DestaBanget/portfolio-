@@ -147,6 +147,7 @@ export function DashboardClient() {
   const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [openWriteupPaths, setOpenWriteupPaths] = useState<Record<string, boolean>>({});
   const [openWriteupSections, setOpenWriteupSections] = useState<Record<string, boolean>>({});
+  const [openWriteupGroups, setOpenWriteupGroups] = useState<Record<string, boolean>>({});
   const [openWriteupRooms, setOpenWriteupRooms] = useState<Record<string, boolean>>({});
 
   const [saving, setSaving] = useState(false);
@@ -663,8 +664,38 @@ export function DashboardClient() {
                                     </div>
 
                                     <div className="mt-2 space-y-2 border-l border-border pl-3">
-                                      {(roomsBySection.get(section.id) ?? []).map((room) => (
-                                        <div key={room.id} className="rounded border border-border p-3">
+                                      {Object.entries(
+                                        (roomsBySection.get(section.id) ?? []).reduce<Record<string, RoomRow[]>>((acc, room) => {
+                                          const normalizedTitle = normalizeRoomTitleForSection(room.title || "", section.title);
+                                          const { group } = splitRoomTitle(normalizedTitle);
+                                          acc[group] = [...(acc[group] ?? []), room];
+                                          return acc;
+                                        }, {}),
+                                      ).map(([groupName, groupRooms]) => {
+                                        const groupKey = `${section.id}::${groupName}`;
+                                        const isGroupOpen = openWriteupGroups[groupKey] ?? false;
+
+                                        return (
+                                          <div key={groupKey} className="rounded border border-border bg-surface/30 p-2">
+                                            <button
+                                              type="button"
+                                              className="flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left"
+                                              onClick={() =>
+                                                setOpenWriteupGroups((prev) => ({
+                                                  ...prev,
+                                                  [groupKey]: !prev[groupKey],
+                                                }))
+                                              }
+                                            >
+                                              <span className="text-sm text-text-primary">📁 {groupName}</span>
+                                              <span className="text-text-secondary">{isGroupOpen ? "−" : "+"}</span>
+                                            </button>
+
+                                            <div className={`grid transition-all duration-300 ${isGroupOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                                              <div className="overflow-hidden">
+                                                <div className="mt-2 space-y-2 border-l border-border pl-2">
+                                                  {groupRooms.map((room) => (
+                                                    <div key={room.id} className="rounded border border-border p-3">
                                           <button
                                             type="button"
                                             className="flex w-full items-center justify-between gap-2 text-left"
@@ -735,7 +766,13 @@ export function DashboardClient() {
                                             </div>
                                           </div>
                                         </div>
-                                      ))}
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                   </div>
                                 </div>
