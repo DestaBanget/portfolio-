@@ -101,6 +101,17 @@ function slugify(value: string): string {
     .replace(/-+/g, "-") || "misc";
 }
 
+function splitRoomTitle(title: string) {
+  const [group, ...rest] = title.split(" - ");
+  if (rest.length === 0) {
+    return { group: "Ungrouped", leaf: title };
+  }
+  return {
+    group: group.trim() || "Ungrouped",
+    leaf: rest.join(" - ").trim() || title,
+  };
+}
+
 export function DashboardClient() {
   const [active, setActive] = useState<SectionKey>("profile");
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -111,6 +122,7 @@ export function DashboardClient() {
   const [sectionsData, setSectionsData] = useState<SectionRow[]>([]);
   const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [openWriteupSections, setOpenWriteupSections] = useState<Record<string, boolean>>({});
+  const [openWriteupGroups, setOpenWriteupGroups] = useState<Record<string, boolean>>({});
   const [openWriteupRooms, setOpenWriteupRooms] = useState<Record<string, boolean>>({});
 
   const [saving, setSaving] = useState(false);
@@ -547,8 +559,37 @@ export function DashboardClient() {
                         </div>
 
                         <div className="space-y-2 border-l border-border pl-3">
-                          {(roomsBySection.get(section.id) ?? []).map((room) => (
-                            <div key={room.id} className="rounded border border-border p-3">
+                          {Object.entries(
+                            (roomsBySection.get(section.id) ?? []).reduce<Record<string, RoomRow[]>>((acc, room) => {
+                              const { group } = splitRoomTitle(room.title || "");
+                              acc[group] = [...(acc[group] ?? []), room];
+                              return acc;
+                            }, {}),
+                          ).map(([groupName, groupRooms]) => {
+                            const groupKey = `${section.id}::${groupName}`;
+                            const isGroupOpen = openWriteupGroups[groupKey] ?? false;
+
+                            return (
+                              <div key={groupKey} className="rounded border border-border bg-surface/30 p-2">
+                                <button
+                                  type="button"
+                                  className="flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left"
+                                  onClick={() =>
+                                    setOpenWriteupGroups((prev) => ({
+                                      ...prev,
+                                      [groupKey]: !prev[groupKey],
+                                    }))
+                                  }
+                                >
+                                  <span className="text-sm text-text-primary">📁 {groupName}</span>
+                                  <span className="text-text-secondary">{isGroupOpen ? "−" : "+"}</span>
+                                </button>
+
+                                <div className={`grid transition-all duration-300 ${isGroupOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                                  <div className="overflow-hidden">
+                                    <div className="mt-2 space-y-2 border-l border-border pl-2">
+                                      {groupRooms.map((room) => (
+                                        <div key={room.id} className="rounded border border-border p-3">
                               <button
                                 type="button"
                                 className="flex w-full items-center justify-between gap-2 text-left"
@@ -560,7 +601,7 @@ export function DashboardClient() {
                                 }
                               >
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm text-text-primary">{room.title}</span>
+                                  <span className="text-sm text-text-primary">📄 {splitRoomTitle(room.title || "").leaf}</span>
                                   <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
                                 </div>
                                 <span className="text-text-secondary">{openWriteupRooms[room.id] ? "−" : "+"}</span>
@@ -617,7 +658,13 @@ export function DashboardClient() {
                                 </div>
                               </div>
                             </div>
-                          ))}
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>

@@ -34,8 +34,18 @@ const platformTone: Record<WriteupSection["platform"], string> = {
   Other: "bg-surface-raised text-text-secondary border-border",
 };
 
+function splitRoomTitle(title: string) {
+  const [group, ...rest] = title.split(" - ");
+  if (rest.length === 0) return { group: "Ungrouped", leaf: title };
+  return {
+    group: group.trim() || "Ungrouped",
+    leaf: rest.join(" - ").trim() || title,
+  };
+}
+
 export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const sortedSections = useMemo(
     () => [...sections].sort((a, b) => (a.order_index_global ?? 0) - (b.order_index_global ?? 0)),
@@ -58,6 +68,11 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
       {sortedSections.map((section) => {
         const sectionOpen = openSections[section.id] ?? false;
         const sectionRooms = roomsBySection.get(section.id) ?? [];
+        const groupedRooms = sectionRooms.reduce<Record<string, WriteupRoom[]>>((acc, room) => {
+          const { group } = splitRoomTitle(room.title || "");
+          acc[group] = [...(acc[group] ?? []), room];
+          return acc;
+        }, {});
 
         return (
           <div key={section.id} className="surface-card overflow-hidden">
@@ -80,34 +95,65 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
                 <div className="border-t border-border px-4 py-3">
                   {sectionRooms.length === 0 ? <p className="text-xs text-text-muted">No public rooms.</p> : null}
 
-                  {sectionRooms.map((room) => (
-                    <div key={room.id} className="mb-2 last:mb-0 rounded-md border border-border bg-surface px-3 py-2">
-                      {room.content ? (
-                        <Link href={`/writeups/${room.id}`} className="group flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span>📄</span>
-                            <span className="text-sm text-text-primary transition-colors group-hover:text-accent">{room.title}</span>
-                            {room.difficulty ? (
-                              <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
-                                {room.difficulty}
-                              </span>
-                            ) : null}
-                            {room.status === "completed" ? <span className="text-accent-green">✓</span> : null}
+                  {Object.entries(groupedRooms).map(([groupName, groupRooms]) => {
+                    const groupKey = `${section.id}::${groupName}`;
+                    const groupOpen = openGroups[groupKey] ?? false;
+
+                    return (
+                      <div key={groupKey} className="mb-2 last:mb-0 rounded-md border border-border bg-surface/40">
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+                          onClick={() =>
+                            setOpenGroups((prev) => ({
+                              ...prev,
+                              [groupKey]: !prev[groupKey],
+                            }))
+                          }
+                        >
+                          <span className="text-sm text-text-primary">📁 {groupName}</span>
+                          <span className="text-text-secondary">{groupOpen ? "−" : "+"}</span>
+                        </button>
+
+                        <div className={`grid transition-all duration-300 ${groupOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                          <div className="overflow-hidden">
+                            <div className="border-t border-border px-3 py-2">
+                              {groupRooms.map((room) => (
+                                <div key={room.id} className="mb-2 last:mb-0 rounded-md border border-border bg-surface px-3 py-2">
+                                  {room.content ? (
+                                    <Link href={`/writeups/${room.id}`} className="group flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <span>📄</span>
+                                        <span className="text-sm text-text-primary transition-colors group-hover:text-accent">
+                                          {splitRoomTitle(room.title || "").leaf}
+                                        </span>
+                                        {room.difficulty ? (
+                                          <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
+                                            {room.difficulty}
+                                          </span>
+                                        ) : null}
+                                        {room.status === "completed" ? <span className="text-accent-green">✓</span> : null}
+                                      </div>
+                                    </Link>
+                                  ) : (
+                                    <div className="flex items-center gap-2 text-sm text-text-secondary">
+                                      <span>📄</span>
+                                      <span>{splitRoomTitle(room.title || "").leaf}</span>
+                                      {room.difficulty ? (
+                                        <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider">
+                                          {room.difficulty}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </Link>
-                      ) : (
-                        <div className="flex items-center gap-2 text-sm text-text-secondary">
-                          <span>📄</span>
-                          <span>{room.title}</span>
-                          {room.difficulty ? (
-                            <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider">
-                              {room.difficulty}
-                            </span>
-                          ) : null}
                         </div>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
