@@ -35,12 +35,16 @@ const platformTone: Record<WriteupSection["platform"], string> = {
 };
 
 function splitRoomTitle(title: string) {
-  const [group, ...rest] = title.split(" - ");
-  if (rest.length === 0) return { group: "Ungrouped", leaf: title };
-  return {
-    group: group.trim() || "Ungrouped",
-    leaf: rest.join(" - ").trim() || title,
-  };
+  const roomTitle = title.trim();
+  const match = roomTitle.match(/^(.*?)\s*-\s*(.+)$/);
+  if (!match) return { group: null as string | null, leaf: roomTitle };
+
+  const group = match[1].trim();
+  const leaf = match[2].trim();
+
+  if (!group || !leaf) return { group: null as string | null, leaf: roomTitle };
+
+  return { group, leaf };
 }
 
 function normalizeRoomTitleForSection(title: string, sectionTitle: string) {
@@ -84,12 +88,30 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
       {sortedSections.map((section) => {
         const sectionOpen = openSections[section.id] ?? false;
         const sectionRooms = roomsBySection.get(section.id) ?? [];
-        const groupedRooms = sectionRooms.reduce<Record<string, WriteupRoom[]>>((acc, room) => {
+        const groupedRooms = sectionRooms.reduce<Record<string, { room: WriteupRoom; leaf: string }[]>>((acc, room) => {
           const normalizedTitle = normalizeRoomTitleForSection(room.title || "", section.title);
-          const { group } = splitRoomTitle(normalizedTitle);
-          acc[group] = [...(acc[group] ?? []), room];
+          const parsed = splitRoomTitle(normalizedTitle);
+
+          const hasExplicitGroup = Boolean(
+            parsed.group && parsed.group.toLowerCase() !== parsed.leaf.toLowerCase(),
+          );
+
+          if (!("__currentGroup" in acc)) {
+            (acc as Record<string, unknown>).__currentGroup = "Ungrouped";
+          }
+
+          const currentGroup = ((acc as Record<string, unknown>).__currentGroup as string) || "Ungrouped";
+          const groupName = hasExplicitGroup ? (parsed.group as string) : currentGroup;
+
+          if (hasExplicitGroup) {
+            (acc as Record<string, unknown>).__currentGroup = parsed.group as string;
+          }
+
+          acc[groupName] = [...(acc[groupName] ?? []), { room, leaf: parsed.leaf }];
           return acc;
         }, {});
+
+        delete (groupedRooms as Record<string, unknown>).__currentGroup;
 
         return (
           <div key={section.id} className="surface-card overflow-hidden">
@@ -135,14 +157,14 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
                         <div className={`grid transition-all duration-300 ${groupOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                           <div className="overflow-hidden">
                             <div className="border-t border-border px-3 py-2">
-                              {groupRooms.map((room) => (
+                              {groupRooms.map(({ room, leaf }) => (
                                 <div key={room.id} className="mb-2 last:mb-0 rounded-md border border-border bg-surface px-3 py-2">
                                   {room.content ? (
                                     <Link href={`/writeups/${room.id}`} className="group flex items-center justify-between gap-2">
                                       <div className="flex items-center gap-2">
                                         <span>📄</span>
                                         <span className="text-sm text-text-primary transition-colors group-hover:text-accent">
-                                          {splitRoomTitle(normalizeRoomTitleForSection(room.title || "", section.title)).leaf}
+                                          {leaf}
                                         </span>
                                         {room.difficulty ? (
                                           <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
@@ -155,7 +177,7 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
                                   ) : (
                                     <div className="flex items-center gap-2 text-sm text-text-secondary">
                                       <span>📄</span>
-                                      <span>{splitRoomTitle(normalizeRoomTitleForSection(room.title || "", section.title)).leaf}</span>
+                                      <span>{leaf}</span>
                                       {room.difficulty ? (
                                         <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider">
                                           {room.difficulty}

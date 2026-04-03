@@ -109,14 +109,20 @@ function slugify(value: string): string {
 }
 
 function splitRoomTitle(title: string) {
-  const [group, ...rest] = title.split(" - ");
-  if (rest.length === 0) {
-    return { group: "Ungrouped", leaf: title };
+  const roomTitle = title.trim();
+  const match = roomTitle.match(/^(.*?)\s*-\s*(.+)$/);
+  if (!match) {
+    return { group: null as string | null, leaf: roomTitle };
   }
-  return {
-    group: group.trim() || "Ungrouped",
-    leaf: rest.join(" - ").trim() || title,
-  };
+
+  const group = match[1].trim();
+  const leaf = match[2].trim();
+
+  if (!group || !leaf) {
+    return { group: null as string | null, leaf: roomTitle };
+  }
+
+  return { group, leaf };
 }
 
 function normalizeRoomTitleForSection(title: string, sectionTitle: string) {
@@ -664,14 +670,33 @@ export function DashboardClient() {
                                     </div>
 
                                     <div className="mt-2 space-y-2 border-l border-border pl-3">
-                                      {Object.entries(
-                                        (roomsBySection.get(section.id) ?? []).reduce<Record<string, RoomRow[]>>((acc, room) => {
+                                      {(() => {
+                                        const groupedRooms: Record<string, { room: RoomRow; leaf: string }[]> = {};
+                                        let currentGroup = "Ungrouped";
+
+                                        for (const room of roomsBySection.get(section.id) ?? []) {
                                           const normalizedTitle = normalizeRoomTitleForSection(room.title || "", section.title);
-                                          const { group } = splitRoomTitle(normalizedTitle);
-                                          acc[group] = [...(acc[group] ?? []), room];
-                                          return acc;
-                                        }, {}),
-                                      ).map(([groupName, groupRooms]) => {
+                                          const parsed = splitRoomTitle(normalizedTitle);
+
+                                          const hasExplicitGroup = Boolean(
+                                            parsed.group && parsed.group.toLowerCase() !== parsed.leaf.toLowerCase(),
+                                          );
+
+                                          const groupName = hasExplicitGroup
+                                            ? (parsed.group as string)
+                                            : currentGroup;
+
+                                          if (hasExplicitGroup) {
+                                            currentGroup = parsed.group as string;
+                                          }
+
+                                          groupedRooms[groupName] = [
+                                            ...(groupedRooms[groupName] ?? []),
+                                            { room, leaf: parsed.leaf },
+                                          ];
+                                        }
+
+                                        return Object.entries(groupedRooms).map(([groupName, groupRooms]) => {
                                         const groupKey = `${section.id}::${groupName}`;
                                         const isGroupOpen = openWriteupGroups[groupKey] ?? false;
 
@@ -694,7 +719,7 @@ export function DashboardClient() {
                                             <div className={`grid transition-all duration-300 ${isGroupOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                                               <div className="overflow-hidden">
                                                 <div className="mt-2 space-y-2 border-l border-border pl-2">
-                                                  {groupRooms.map((room) => (
+                                                  {groupRooms.map(({ room, leaf }) => (
                                                     <div key={room.id} className="rounded border border-border p-3">
                                           <button
                                             type="button"
@@ -707,9 +732,7 @@ export function DashboardClient() {
                                             }
                                           >
                                             <div className="flex items-center gap-2">
-                                              <span className="text-sm text-text-primary">
-                                                📄 {splitRoomTitle(normalizeRoomTitleForSection(room.title || "", section.title)).leaf}
-                                              </span>
+                                              <span className="text-sm text-text-primary">📄 {leaf}</span>
                                               <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
                                             </div>
                                             <span className="text-text-secondary">{openWriteupRooms[room.id] ? "−" : "+"}</span>
@@ -772,7 +795,8 @@ export function DashboardClient() {
                                             </div>
                                           </div>
                                         );
-                                      })}
+                                        });
+                                      })()}
                                     </div>
                                   </div>
                                 </div>
