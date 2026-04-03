@@ -43,6 +43,22 @@ function splitRoomTitle(title: string) {
   };
 }
 
+function normalizeRoomTitleForSection(title: string, sectionTitle: string) {
+  const roomTitle = title.trim();
+  const section = sectionTitle.trim();
+  if (!roomTitle || !section) return roomTitle;
+
+  const roomTitleLower = roomTitle.toLowerCase();
+  const sectionLower = section.toLowerCase();
+  const prefix = `${sectionLower} - `;
+
+  if (roomTitleLower.startsWith(prefix)) {
+    return roomTitle.slice(prefix.length).trim();
+  }
+
+  return roomTitle;
+}
+
 export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -69,7 +85,8 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
         const sectionOpen = openSections[section.id] ?? false;
         const sectionRooms = roomsBySection.get(section.id) ?? [];
         const groupedRooms = sectionRooms.reduce<Record<string, WriteupRoom[]>>((acc, room) => {
-          const { group } = splitRoomTitle(room.title || "");
+          const normalizedTitle = normalizeRoomTitleForSection(room.title || "", section.title);
+          const { group } = splitRoomTitle(normalizedTitle);
           acc[group] = [...(acc[group] ?? []), room];
           return acc;
         }, {});
@@ -125,7 +142,7 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
                                       <div className="flex items-center gap-2">
                                         <span>📄</span>
                                         <span className="text-sm text-text-primary transition-colors group-hover:text-accent">
-                                          {splitRoomTitle(room.title || "").leaf}
+                                          {splitRoomTitle(normalizeRoomTitleForSection(room.title || "", section.title)).leaf}
                                         </span>
                                         {room.difficulty ? (
                                           <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
@@ -138,7 +155,7 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
                                   ) : (
                                     <div className="flex items-center gap-2 text-sm text-text-secondary">
                                       <span>📄</span>
-                                      <span>{splitRoomTitle(room.title || "").leaf}</span>
+                                      <span>{splitRoomTitle(normalizeRoomTitleForSection(room.title || "", section.title)).leaf}</span>
                                       {room.difficulty ? (
                                         <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider">
                                           {room.difficulty}

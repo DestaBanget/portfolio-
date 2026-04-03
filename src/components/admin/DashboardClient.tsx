@@ -119,6 +119,22 @@ function splitRoomTitle(title: string) {
   };
 }
 
+function normalizeRoomTitleForSection(title: string, sectionTitle: string) {
+  const roomTitle = title.trim();
+  const section = sectionTitle.trim();
+  if (!roomTitle || !section) return roomTitle;
+
+  const roomTitleLower = roomTitle.toLowerCase();
+  const sectionLower = section.toLowerCase();
+  const prefix = `${sectionLower} - `;
+
+  if (roomTitleLower.startsWith(prefix)) {
+    return roomTitle.slice(prefix.length).trim();
+  }
+
+  return roomTitle;
+}
+
 export function DashboardClient() {
   const [active, setActive] = useState<SectionKey>("profile");
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -650,7 +666,8 @@ export function DashboardClient() {
                                     <div className="mt-2 space-y-2 border-l border-border pl-3">
                                       {Object.entries(
                                         (roomsBySection.get(section.id) ?? []).reduce<Record<string, RoomRow[]>>((acc, room) => {
-                                          const { group } = splitRoomTitle(room.title || "");
+                                          const normalizedTitle = normalizeRoomTitleForSection(room.title || "", section.title);
+                                          const { group } = splitRoomTitle(normalizedTitle);
                                           acc[group] = [...(acc[group] ?? []), room];
                                           return acc;
                                         }, {}),
@@ -690,7 +707,9 @@ export function DashboardClient() {
                                             }
                                           >
                                             <div className="flex items-center gap-2">
-                                              <span className="text-sm text-text-primary">📄 {splitRoomTitle(room.title || "").leaf}</span>
+                                              <span className="text-sm text-text-primary">
+                                                📄 {splitRoomTitle(normalizeRoomTitleForSection(room.title || "", section.title)).leaf}
+                                              </span>
                                               <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
                                             </div>
                                             <span className="text-text-secondary">{openWriteupRooms[room.id] ? "−" : "+"}</span>
