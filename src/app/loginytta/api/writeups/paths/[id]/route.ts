@@ -12,10 +12,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const payload = await req.json();
   const { data, error } = await supabaseAdmin
-    .from("wu_sections")
+    .from("wu_paths")
     .update({
-      path_id: payload.path_id ?? null,
       title: payload.title,
+      platform: payload.platform ?? "THM",
       order_index: payload.order_index ?? 0,
     })
     .eq("id", params.id)
@@ -30,7 +30,7 @@ export async function DELETE(_: NextRequest, { params }: Params) {
   const unauthorized = requireAdmin();
   if (unauthorized) return unauthorized;
 
-  const { error } = await supabaseAdmin.from("wu_sections").delete().eq("id", params.id);
+  const { error } = await supabaseAdmin.from("wu_paths").delete().eq("id", params.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

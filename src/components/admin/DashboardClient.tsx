@@ -44,11 +44,18 @@ interface ProjectRow {
   order_index: number;
 }
 
-interface SectionRow {
+interface PathRow {
   id: string;
   title: string;
   platform: "THM" | "HTB" | "CTF" | "Other";
-  order_index_global: number;
+  order_index: number;
+}
+
+interface SectionRow {
+  id: string;
+  path_id: string | null;
+  title: string;
+  order_index: number;
 }
 
 interface RoomRow {
@@ -101,17 +108,6 @@ function slugify(value: string): string {
     .replace(/-+/g, "-") || "misc";
 }
 
-function splitRoomTitle(title: string) {
-  const [group, ...rest] = title.split(" - ");
-  if (rest.length === 0) {
-    return { group: "Ungrouped", leaf: title };
-  }
-  return {
-    group: group.trim() || "Ungrouped",
-    leaf: rest.join(" - ").trim() || title,
-  };
-}
-
 export function DashboardClient() {
   const [active, setActive] = useState<SectionKey>("profile");
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -119,10 +115,11 @@ export function DashboardClient() {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [experience, setExperience] = useState<ExperienceRow[]>([]);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
+  const [paths, setPaths] = useState<PathRow[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionRow[]>([]);
   const [rooms, setRooms] = useState<RoomRow[]>([]);
+  const [openWriteupPaths, setOpenWriteupPaths] = useState<Record<string, boolean>>({});
   const [openWriteupSections, setOpenWriteupSections] = useState<Record<string, boolean>>({});
-  const [openWriteupGroups, setOpenWriteupGroups] = useState<Record<string, boolean>>({});
   const [openWriteupRooms, setOpenWriteupRooms] = useState<Record<string, boolean>>({});
 
   const [saving, setSaving] = useState(false);
@@ -134,10 +131,11 @@ export function DashboardClient() {
   };
 
   const loadAll = async () => {
-    const [profileRow, expRows, projectRows, sectionRows, roomRows] = await Promise.all([
+    const [profileRow, expRows, projectRows, pathRows, sectionRows, roomRows] = await Promise.all([
       request<ProfileRow>("/loginytta/api/profile"),
       request<ExperienceRow[]>("/loginytta/api/experience"),
       request<ProjectRow[]>("/loginytta/api/projects"),
+      request<PathRow[]>("/loginytta/api/writeups/paths"),
       request<SectionRow[]>("/loginytta/api/writeups/sections"),
       request<RoomRow[]>("/loginytta/api/writeups/rooms"),
     ]);
@@ -145,6 +143,7 @@ export function DashboardClient() {
     setProfile(profileRow);
     setExperience(expRows);
     setProjects(projectRows);
+    setPaths(pathRows);
     setSectionsData(sectionRows);
     setRooms(roomRows);
   };
@@ -159,10 +158,19 @@ export function DashboardClient() {
     return () => clearTimeout(timeout);
   }, [notice]);
 
-  const sortedSections = useMemo(
-    () => [...sectionsData].sort((a, b) => (a.order_index_global ?? 0) - (b.order_index_global ?? 0)),
-    [sectionsData],
-  );
+  const sortedPaths = useMemo(() => [...paths].sort((a, b) => a.order_index - b.order_index), [paths]);
+
+  const sectionsByPath = useMemo(() => {
+    const map = new Map<string, SectionRow[]>();
+    for (const section of sectionsData) {
+      if (!section.path_id) continue;
+      map.set(section.path_id, [...(map.get(section.path_id) ?? []), section]);
+    }
+    map.forEach((v, k) => {
+      map.set(k, [...v].sort((a, b) => a.order_index - b.order_index));
+    });
+    return map;
+  }, [sectionsData]);
 
   const roomsBySection = useMemo(() => {
     const map = new Map<string, RoomRow[]>();
@@ -224,14 +232,27 @@ export function DashboardClient() {
     }
   };
 
-  const addSection = async () => {
+  const addPath = async () => {
+    try {
+      await request("/loginytta/api/writeups/paths", {
+        method: "POST",
+        body: JSON.stringify({ title: "New Path", platform: "THM", order_index: paths.length }),
+      });
+      await loadAll();
+      showSuccess("Path added successfully");
+    } catch (error) {
+      showError(error);
+    }
+  };
+
+  const addSection = async (pathId: string) => {
     try {
       await request("/loginytta/api/writeups/sections", {
         method: "POST",
         body: JSON.stringify({
           title: "New Section",
-          platform: "THM",
-          order_index_global: sectionsData.length,
+          path_id: pathId,
+          order_index: (sectionsByPath.get(pathId) ?? []).length,
         }),
       });
       await loadAll();
@@ -469,52 +490,46 @@ export function DashboardClient() {
         {active === "writeups" ? (
           <section className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={addSection}>
-                Add Section
+              <Button variant="outline" size="sm" onClick={addPath}>
+                Add Path
               </Button>
             </div>
             <div className="space-y-4">
-              {sortedSections.map((section) => (
-                <div key={section.id} className="rounded-lg border border-border p-4">
+              {sortedPaths.map((path) => (
+                <div key={path.id} className="rounded-lg border border-border p-4">
                   <button
                     type="button"
                     className="flex w-full items-center justify-between gap-3 text-left"
                     onClick={() =>
-                      setOpenWriteupSections((prev) => ({
+                      setOpenWriteupPaths((prev) => ({
                         ...prev,
-                        [section.id]: !prev[section.id],
+                        [path.id]: !prev[path.id],
                       }))
                     }
                   >
                     <div className="flex items-center gap-2">
-                      <span className="font-display text-lg text-text-primary">{section.title}</span>
+                      <span className="font-display text-lg text-text-primary">{path.title}</span>
                       <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
-                        {section.platform}
+                        {path.platform}
                       </span>
                     </div>
-                    <span className="text-text-secondary">{openWriteupSections[section.id] ? "−" : "+"}</span>
+                    <span className="text-text-secondary">{openWriteupPaths[path.id] ? "−" : "+"}</span>
                   </button>
 
-                  <div className={`grid transition-all duration-300 ${openWriteupSections[section.id] ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                  <div className={`grid transition-all duration-300 ${openWriteupPaths[path.id] ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                     <div className="overflow-hidden">
                       <div className="mt-3 space-y-3 border-t border-border pt-3">
                         <div className="grid gap-2 md:grid-cols-2">
                           <input
                             className="rounded border border-border bg-surface-raised px-2 py-1"
-                            value={section.title}
-                            onChange={(e) => setSectionsData((prev) => prev.map((x) => (x.id === section.id ? { ...x, title: e.target.value } : x)))}
-                            placeholder="Section title"
+                            value={path.title}
+                            onChange={(e) => setPaths((prev) => prev.map((x) => (x.id === path.id ? { ...x, title: e.target.value } : x)))}
+                            placeholder="Path title"
                           />
                           <select
                             className="rounded border border-border bg-surface-raised px-2 py-1"
-                            value={section.platform}
-                            onChange={(e) =>
-                              setSectionsData((prev) =>
-                                prev.map((x) =>
-                                  x.id === section.id ? { ...x, platform: e.target.value as SectionRow["platform"] } : x,
-                                ),
-                              )
-                            }
+                            value={path.platform}
+                            onChange={(e) => setPaths((prev) => prev.map((x) => (x.id === path.id ? { ...x, platform: e.target.value as PathRow["platform"] } : x)))}
                           >
                             <option>THM</option>
                             <option>HTB</option>
@@ -528,143 +543,176 @@ export function DashboardClient() {
                             size="md"
                             onClick={async () => {
                               try {
-                                await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "PATCH", body: JSON.stringify(section) });
+                                await request(`/loginytta/api/writeups/paths/${path.id}`, { method: "PATCH", body: JSON.stringify(path) });
                                 await loadAll();
-                                showSuccess("Section saved successfully");
+                                showSuccess("Path saved successfully");
                               } catch (error) {
                                 showError(error);
                               }
                             }}
                           >
-                            Save Section
+                            Save Path
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => addRoom(section.id)}>
-                            Add Room
+                          <Button variant="outline" size="sm" onClick={() => addSection(path.id)}>
+                            Add Section
                           </Button>
                           <Button
                             variant="danger"
                             size="sm"
                             onClick={async () => {
                               try {
-                                await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "DELETE" });
+                                await request(`/loginytta/api/writeups/paths/${path.id}`, { method: "DELETE" });
                                 await loadAll();
-                                showSuccess("Section deleted successfully");
+                                showSuccess("Path deleted successfully");
                               } catch (error) {
                                 showError(error);
                               }
                             }}
                           >
-                            Delete Section
+                            Delete Path
                           </Button>
                         </div>
 
                         <div className="space-y-2 border-l border-border pl-3">
-                          {Object.entries(
-                            (roomsBySection.get(section.id) ?? []).reduce<Record<string, RoomRow[]>>((acc, room) => {
-                              const { group } = splitRoomTitle(room.title || "");
-                              acc[group] = [...(acc[group] ?? []), room];
-                              return acc;
-                            }, {}),
-                          ).map(([groupName, groupRooms]) => {
-                            const groupKey = `${section.id}::${groupName}`;
-                            const isGroupOpen = openWriteupGroups[groupKey] ?? false;
-
-                            return (
-                              <div key={groupKey} className="rounded border border-border bg-surface/30 p-2">
-                                <button
-                                  type="button"
-                                  className="flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left"
-                                  onClick={() =>
-                                    setOpenWriteupGroups((prev) => ({
-                                      ...prev,
-                                      [groupKey]: !prev[groupKey],
-                                    }))
-                                  }
-                                >
-                                  <span className="text-sm text-text-primary">📁 {groupName}</span>
-                                  <span className="text-text-secondary">{isGroupOpen ? "−" : "+"}</span>
-                                </button>
-
-                                <div className={`grid transition-all duration-300 ${isGroupOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-                                  <div className="overflow-hidden">
-                                    <div className="mt-2 space-y-2 border-l border-border pl-2">
-                                      {groupRooms.map((room) => (
-                                        <div key={room.id} className="rounded border border-border p-3">
+                          {(sectionsByPath.get(path.id) ?? []).map((section) => (
+                            <div key={section.id} className="rounded border border-border p-3">
                               <button
                                 type="button"
                                 className="flex w-full items-center justify-between gap-2 text-left"
                                 onClick={() =>
-                                  setOpenWriteupRooms((prev) => ({
+                                  setOpenWriteupSections((prev) => ({
                                     ...prev,
-                                    [room.id]: !prev[room.id],
+                                    [section.id]: !prev[section.id],
                                   }))
                                 }
                               >
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm text-text-primary">📄 {splitRoomTitle(room.title || "").leaf}</span>
-                                  <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
-                                </div>
-                                <span className="text-text-secondary">{openWriteupRooms[room.id] ? "−" : "+"}</span>
+                                <span className="text-sm text-text-primary">📂 {section.title}</span>
+                                <span className="text-text-secondary">{openWriteupSections[section.id] ? "−" : "+"}</span>
                               </button>
 
-                              <div className={`grid transition-all duration-300 ${openWriteupRooms[room.id] ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                              <div className={`grid transition-all duration-300 ${openWriteupSections[section.id] ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                                 <div className="overflow-hidden">
                                   <div className="mt-2 border-t border-border pt-2">
-                                    <div className="mb-2 flex items-center justify-between gap-2">
-                                      <input className="w-full rounded border border-border bg-surface-raised px-2 py-1" value={room.title} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, title: e.target.value } : x)))} />
-                                      <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
-                                    </div>
-                                    <div className="grid gap-2 md:grid-cols-3">
-                                      <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.difficulty ?? "Easy"} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, difficulty: e.target.value as RoomRow["difficulty"] } : x)))}>
-                                        <option>Easy</option><option>Medium</option><option>Hard</option><option>Insane</option>
-                                      </select>
-                                      <input className="rounded border border-border bg-surface-raised px-2 py-1" value={room.os ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, os: e.target.value } : x)))} placeholder="OS" />
-                                      <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.status} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, status: e.target.value as RoomRow["status"] } : x)))}>
-                                        <option value="in-progress">in-progress</option>
-                                        <option value="completed">completed</option>
-                                      </select>
-                                    </div>
-                                    <div className="mt-2 flex gap-3 text-xs">
-                                      <label className="flex items-center gap-1"><input type="checkbox" checked={room.is_public} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, is_public: e.target.checked } : x)))} /> public</label>
-                                      <label className="flex items-center gap-1"><input type="checkbox" checked={room.retired} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, retired: e.target.checked } : x)))} /> retired</label>
-                                    </div>
-                                    <input className="mt-2 w-full rounded border border-border bg-surface-raised px-2 py-1" value={(room.tags ?? []).join(", ")} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) } : x)))} placeholder="tags (comma separated)" />
-                                    <textarea className="mt-2 min-h-28 w-full rounded border border-border bg-surface-raised px-2 py-1 font-mono text-sm" value={room.content ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, content: e.target.value } : x)))} placeholder="Markdown content" />
-                                    <div className="mt-2 space-y-2">
-                                      <ImageUploader folder={slugify(room.title)} />
-                                      <p className="text-xs text-text-tertiary">Copy the URL above and use it in markdown as: ![description](url)</p>
-                                    </div>
+                                    <input
+                                      className="w-full rounded border border-border bg-surface-raised px-2 py-1"
+                                      value={section.title}
+                                      onChange={(e) => setSectionsData((prev) => prev.map((x) => (x.id === section.id ? { ...x, title: e.target.value } : x)))}
+                                      placeholder="Section title"
+                                    />
                                     <div className="mt-2 flex gap-2">
-                                      <Button variant="primary" size="sm" onClick={async () => {
-                                        try {
-                                          await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "PATCH", body: JSON.stringify(room) });
-                                          await loadAll();
-                                          showSuccess("Room saved successfully");
-                                        } catch (error) {
-                                          showError(error);
-                                        }
-                                      }}>Save Room</Button>
-                                      <Button variant="danger" size="sm" onClick={async () => {
-                                        try {
-                                          await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "DELETE" });
-                                          await loadAll();
-                                          showSuccess("Room deleted successfully");
-                                        } catch (error) {
-                                          showError(error);
-                                        }
-                                      }}>Delete Room</Button>
+                                      <Button
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={async () => {
+                                          try {
+                                            await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "PATCH", body: JSON.stringify(section) });
+                                            await loadAll();
+                                            showSuccess("Section saved successfully");
+                                          } catch (error) {
+                                            showError(error);
+                                          }
+                                        }}
+                                      >
+                                        Save Section
+                                      </Button>
+                                      <Button variant="outline" size="sm" onClick={() => addRoom(section.id)}>
+                                        Add Room
+                                      </Button>
+                                      <Button
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={async () => {
+                                          try {
+                                            await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "DELETE" });
+                                            await loadAll();
+                                            showSuccess("Section deleted successfully");
+                                          } catch (error) {
+                                            showError(error);
+                                          }
+                                        }}
+                                      >
+                                        Delete Section
+                                      </Button>
                                     </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
+
+                                    <div className="mt-2 space-y-2 border-l border-border pl-3">
+                                      {(roomsBySection.get(section.id) ?? []).map((room) => (
+                                        <div key={room.id} className="rounded border border-border p-3">
+                                          <button
+                                            type="button"
+                                            className="flex w-full items-center justify-between gap-2 text-left"
+                                            onClick={() =>
+                                              setOpenWriteupRooms((prev) => ({
+                                                ...prev,
+                                                [room.id]: !prev[room.id],
+                                              }))
+                                            }
+                                          >
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-sm text-text-primary">📄 {room.title}</span>
+                                              <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
+                                            </div>
+                                            <span className="text-text-secondary">{openWriteupRooms[room.id] ? "−" : "+"}</span>
+                                          </button>
+
+                                          <div className={`grid transition-all duration-300 ${openWriteupRooms[room.id] ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                                            <div className="overflow-hidden">
+                                              <div className="mt-2 border-t border-border pt-2">
+                                                <div className="mb-2 flex items-center justify-between gap-2">
+                                                  <input className="w-full rounded border border-border bg-surface-raised px-2 py-1" value={room.title} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, title: e.target.value } : x)))} />
+                                                  <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
+                                                </div>
+                                                <div className="grid gap-2 md:grid-cols-3">
+                                                  <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.difficulty ?? "Easy"} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, difficulty: e.target.value as RoomRow["difficulty"] } : x)))}>
+                                                    <option>Easy</option><option>Medium</option><option>Hard</option><option>Insane</option>
+                                                  </select>
+                                                  <input className="rounded border border-border bg-surface-raised px-2 py-1" value={room.os ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, os: e.target.value } : x)))} placeholder="OS" />
+                                                  <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.status} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, status: e.target.value as RoomRow["status"] } : x)))}>
+                                                    <option value="in-progress">in-progress</option>
+                                                    <option value="completed">completed</option>
+                                                  </select>
+                                                </div>
+                                                <div className="mt-2 flex gap-3 text-xs">
+                                                  <label className="flex items-center gap-1"><input type="checkbox" checked={room.is_public} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, is_public: e.target.checked } : x)))} /> public</label>
+                                                  <label className="flex items-center gap-1"><input type="checkbox" checked={room.retired} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, retired: e.target.checked } : x)))} /> retired</label>
+                                                </div>
+                                                <input className="mt-2 w-full rounded border border-border bg-surface-raised px-2 py-1" value={(room.tags ?? []).join(", ")} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) } : x)))} placeholder="tags (comma separated)" />
+                                                <textarea className="mt-2 min-h-28 w-full rounded border border-border bg-surface-raised px-2 py-1 font-mono text-sm" value={room.content ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, content: e.target.value } : x)))} placeholder="Markdown content" />
+                                                <div className="mt-2 space-y-2">
+                                                  <ImageUploader folder={slugify(room.title)} />
+                                                  <p className="text-xs text-text-tertiary">Copy the URL above and use it in markdown as: ![description](url)</p>
+                                                </div>
+                                                <div className="mt-2 flex gap-2">
+                                                  <Button variant="primary" size="sm" onClick={async () => {
+                                                    try {
+                                                      await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "PATCH", body: JSON.stringify(room) });
+                                                      await loadAll();
+                                                      showSuccess("Room saved successfully");
+                                                    } catch (error) {
+                                                      showError(error);
+                                                    }
+                                                  }}>Save Room</Button>
+                                                  <Button variant="danger" size="sm" onClick={async () => {
+                                                    try {
+                                                      await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "DELETE" });
+                                                      await loadAll();
+                                                      showSuccess("Room deleted successfully");
+                                                    } catch (error) {
+                                                      showError(error);
+                                                    }
+                                                  }}>Delete Room</Button>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
                                       ))}
                                     </div>
                                   </div>
                                 </div>
                               </div>
-                            );
-                          })}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>

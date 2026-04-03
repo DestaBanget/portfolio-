@@ -6,7 +6,11 @@ export async function GET() {
   const unauthorized = requireAdmin();
   if (unauthorized) return unauthorized;
 
-  const { data, error } = await supabaseAdmin.from("wu_sections").select("*").order("order_index", { ascending: true });
+  const { data, error } = await supabaseAdmin
+    .from("wu_paths")
+    .select("*")
+    .order("order_index", { ascending: true });
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
@@ -17,10 +21,10 @@ export async function POST(req: NextRequest) {
 
   const payload = await req.json();
   const { data, error } = await supabaseAdmin
-    .from("wu_sections")
+    .from("wu_paths")
     .insert({
-      path_id: payload.path_id ?? null,
       title: payload.title,
+      platform: payload.platform ?? "THM",
       order_index: payload.order_index ?? 0,
     })
     .select("*")
