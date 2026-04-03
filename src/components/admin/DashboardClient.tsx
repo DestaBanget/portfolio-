@@ -110,6 +110,7 @@ export function DashboardClient() {
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionRow[]>([]);
   const [rooms, setRooms] = useState<RoomRow[]>([]);
+  const [openWriteupSections, setOpenWriteupSections] = useState<Record<string, boolean>>({});
 
   const [saving, setSaving] = useState(false);
 
@@ -462,115 +463,140 @@ export function DashboardClient() {
             <div className="space-y-4">
               {sortedSections.map((section) => (
                 <div key={section.id} className="rounded-lg border border-border p-4">
-                  <div className="grid gap-2 md:grid-cols-2">
-                    <input
-                      className="rounded border border-border bg-surface-raised px-2 py-1"
-                      value={section.title}
-                      onChange={(e) => setSectionsData((prev) => prev.map((x) => (x.id === section.id ? { ...x, title: e.target.value } : x)))}
-                      placeholder="Section title"
-                    />
-                    <select
-                      className="rounded border border-border bg-surface-raised px-2 py-1"
-                      value={section.platform}
-                      onChange={(e) =>
-                        setSectionsData((prev) =>
-                          prev.map((x) =>
-                            x.id === section.id ? { ...x, platform: e.target.value as SectionRow["platform"] } : x,
-                          ),
-                        )
-                      }
-                    >
-                      <option>THM</option>
-                      <option>HTB</option>
-                      <option>CTF</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      variant="primary"
-                      size="md"
-                      onClick={async () => {
-                        try {
-                          await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "PATCH", body: JSON.stringify(section) });
-                          await loadAll();
-                          showSuccess("Section saved successfully");
-                        } catch (error) {
-                          showError(error);
-                        }
-                      }}
-                    >
-                      Save Section
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => addRoom(section.id)}>
-                      Add Room
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "DELETE" });
-                          await loadAll();
-                          showSuccess("Section deleted successfully");
-                        } catch (error) {
-                          showError(error);
-                        }
-                      }}
-                    >
-                      Delete Section
-                    </Button>
-                  </div>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between gap-3 text-left"
+                    onClick={() =>
+                      setOpenWriteupSections((prev) => ({
+                        ...prev,
+                        [section.id]: !prev[section.id],
+                      }))
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-display text-lg text-text-primary">{section.title}</span>
+                      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
+                        {section.platform}
+                      </span>
+                    </div>
+                    <span className="text-text-secondary">{openWriteupSections[section.id] ? "−" : "+"}</span>
+                  </button>
 
-                  <div className="mt-3 space-y-2 border-l border-border pl-3">
-                    {(roomsBySection.get(section.id) ?? []).map((room) => (
-                      <div key={room.id} className="rounded border border-border p-3">
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <input className="w-full rounded border border-border bg-surface-raised px-2 py-1" value={room.title} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, title: e.target.value } : x)))} />
-                          <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
-                        </div>
-                        <div className="grid gap-2 md:grid-cols-3">
-                          <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.difficulty ?? "Easy"} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, difficulty: e.target.value as RoomRow["difficulty"] } : x)))}>
-                            <option>Easy</option><option>Medium</option><option>Hard</option><option>Insane</option>
-                          </select>
-                          <input className="rounded border border-border bg-surface-raised px-2 py-1" value={room.os ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, os: e.target.value } : x)))} placeholder="OS" />
-                          <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.status} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, status: e.target.value as RoomRow["status"] } : x)))}>
-                            <option value="in-progress">in-progress</option>
-                            <option value="completed">completed</option>
-                          </select>
-                        </div>
-                        <div className="mt-2 flex gap-3 text-xs">
-                          <label className="flex items-center gap-1"><input type="checkbox" checked={room.is_public} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, is_public: e.target.checked } : x)))} /> public</label>
-                          <label className="flex items-center gap-1"><input type="checkbox" checked={room.retired} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, retired: e.target.checked } : x)))} /> retired</label>
-                        </div>
-                        <input className="mt-2 w-full rounded border border-border bg-surface-raised px-2 py-1" value={(room.tags ?? []).join(", ")} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) } : x)))} placeholder="tags (comma separated)" />
-                        <textarea className="mt-2 min-h-28 w-full rounded border border-border bg-surface-raised px-2 py-1 font-mono text-sm" value={room.content ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, content: e.target.value } : x)))} placeholder="Markdown content" />
-                        <div className="mt-2 space-y-2">
-                          <ImageUploader folder={slugify(room.title)} />
-                          <p className="text-xs text-text-tertiary">Copy the URL above and use it in markdown as: ![description](url)</p>
-                        </div>
-                        <div className="mt-2 flex gap-2">
-                          <Button variant="primary" size="sm" onClick={async () => {
-                            try {
-                              await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "PATCH", body: JSON.stringify(room) });
-                              await loadAll();
-                              showSuccess("Room saved successfully");
-                            } catch (error) {
-                              showError(error);
+                  <div className={`grid transition-all duration-300 ${openWriteupSections[section.id] ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                    <div className="overflow-hidden">
+                      <div className="mt-3 space-y-3 border-t border-border pt-3">
+                        <div className="grid gap-2 md:grid-cols-2">
+                          <input
+                            className="rounded border border-border bg-surface-raised px-2 py-1"
+                            value={section.title}
+                            onChange={(e) => setSectionsData((prev) => prev.map((x) => (x.id === section.id ? { ...x, title: e.target.value } : x)))}
+                            placeholder="Section title"
+                          />
+                          <select
+                            className="rounded border border-border bg-surface-raised px-2 py-1"
+                            value={section.platform}
+                            onChange={(e) =>
+                              setSectionsData((prev) =>
+                                prev.map((x) =>
+                                  x.id === section.id ? { ...x, platform: e.target.value as SectionRow["platform"] } : x,
+                                ),
+                              )
                             }
-                          }}>Save Room</Button>
-                          <Button variant="danger" size="sm" onClick={async () => {
-                            try {
-                              await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "DELETE" });
-                              await loadAll();
-                              showSuccess("Room deleted successfully");
-                            } catch (error) {
-                              showError(error);
-                            }
-                          }}>Delete Room</Button>
+                          >
+                            <option>THM</option>
+                            <option>HTB</option>
+                            <option>CTF</option>
+                            <option>Other</option>
+                          </select>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="primary"
+                            size="md"
+                            onClick={async () => {
+                              try {
+                                await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "PATCH", body: JSON.stringify(section) });
+                                await loadAll();
+                                showSuccess("Section saved successfully");
+                              } catch (error) {
+                                showError(error);
+                              }
+                            }}
+                          >
+                            Save Section
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => addRoom(section.id)}>
+                            Add Room
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await request(`/loginytta/api/writeups/sections/${section.id}`, { method: "DELETE" });
+                                await loadAll();
+                                showSuccess("Section deleted successfully");
+                              } catch (error) {
+                                showError(error);
+                              }
+                            }}
+                          >
+                            Delete Section
+                          </Button>
+                        </div>
+
+                        <div className="space-y-2 border-l border-border pl-3">
+                          {(roomsBySection.get(section.id) ?? []).map((room) => (
+                            <div key={room.id} className="rounded border border-border p-3">
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <input className="w-full rounded border border-border bg-surface-raised px-2 py-1" value={room.title} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, title: e.target.value } : x)))} />
+                                <span className="text-xs">{room.is_public ? "🌐" : "🔒"}</span>
+                              </div>
+                              <div className="grid gap-2 md:grid-cols-3">
+                                <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.difficulty ?? "Easy"} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, difficulty: e.target.value as RoomRow["difficulty"] } : x)))}>
+                                  <option>Easy</option><option>Medium</option><option>Hard</option><option>Insane</option>
+                                </select>
+                                <input className="rounded border border-border bg-surface-raised px-2 py-1" value={room.os ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, os: e.target.value } : x)))} placeholder="OS" />
+                                <select className="rounded border border-border bg-surface-raised px-2 py-1" value={room.status} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, status: e.target.value as RoomRow["status"] } : x)))}>
+                                  <option value="in-progress">in-progress</option>
+                                  <option value="completed">completed</option>
+                                </select>
+                              </div>
+                              <div className="mt-2 flex gap-3 text-xs">
+                                <label className="flex items-center gap-1"><input type="checkbox" checked={room.is_public} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, is_public: e.target.checked } : x)))} /> public</label>
+                                <label className="flex items-center gap-1"><input type="checkbox" checked={room.retired} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, retired: e.target.checked } : x)))} /> retired</label>
+                              </div>
+                              <input className="mt-2 w-full rounded border border-border bg-surface-raised px-2 py-1" value={(room.tags ?? []).join(", ")} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) } : x)))} placeholder="tags (comma separated)" />
+                              <textarea className="mt-2 min-h-28 w-full rounded border border-border bg-surface-raised px-2 py-1 font-mono text-sm" value={room.content ?? ""} onChange={(e) => setRooms((prev) => prev.map((x) => (x.id === room.id ? { ...x, content: e.target.value } : x)))} placeholder="Markdown content" />
+                              <div className="mt-2 space-y-2">
+                                <ImageUploader folder={slugify(room.title)} />
+                                <p className="text-xs text-text-tertiary">Copy the URL above and use it in markdown as: ![description](url)</p>
+                              </div>
+                              <div className="mt-2 flex gap-2">
+                                <Button variant="primary" size="sm" onClick={async () => {
+                                  try {
+                                    await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "PATCH", body: JSON.stringify(room) });
+                                    await loadAll();
+                                    showSuccess("Room saved successfully");
+                                  } catch (error) {
+                                    showError(error);
+                                  }
+                                }}>Save Room</Button>
+                                <Button variant="danger" size="sm" onClick={async () => {
+                                  try {
+                                    await request(`/loginytta/api/writeups/rooms/${room.id}`, { method: "DELETE" });
+                                    await loadAll();
+                                    showSuccess("Room deleted successfully");
+                                  } catch (error) {
+                                    showError(error);
+                                  }
+                                }}>Delete Room</Button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
               ))}
