@@ -153,7 +153,6 @@ export function DashboardClient() {
   const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [openWriteupPaths, setOpenWriteupPaths] = useState<Record<string, boolean>>({});
   const [openWriteupSections, setOpenWriteupSections] = useState<Record<string, boolean>>({});
-  const [openWriteupGroups, setOpenWriteupGroups] = useState<Record<string, boolean>>({});
   const [openWriteupRooms, setOpenWriteupRooms] = useState<Record<string, boolean>>({});
 
   const [saving, setSaving] = useState(false);
@@ -669,58 +668,13 @@ export function DashboardClient() {
                                       </Button>
                                     </div>
 
-                                    <div className="mt-2 space-y-2 border-l border-border pl-3">
-                                      {(() => {
-                                        const groupedRooms: Record<string, { room: RoomRow; leaf: string }[]> = {};
-                                        let currentGroup = "Ungrouped";
-
-                                        for (const room of roomsBySection.get(section.id) ?? []) {
-                                          const normalizedTitle = normalizeRoomTitleForSection(room.title || "", section.title);
-                                          const parsed = splitRoomTitle(normalizedTitle);
-
-                                          const hasExplicitGroup = Boolean(
-                                            parsed.group && parsed.group.toLowerCase() !== parsed.leaf.toLowerCase(),
-                                          );
-
-                                          const groupName = hasExplicitGroup
-                                            ? (parsed.group as string)
-                                            : currentGroup;
-
-                                          if (hasExplicitGroup) {
-                                            currentGroup = parsed.group as string;
-                                          }
-
-                                          groupedRooms[groupName] = [
-                                            ...(groupedRooms[groupName] ?? []),
-                                            { room, leaf: parsed.leaf },
-                                          ];
-                                        }
-
-                                        return Object.entries(groupedRooms).map(([groupName, groupRooms]) => {
-                                        const groupKey = `${section.id}::${groupName}`;
-                                        const isGroupOpen = openWriteupGroups[groupKey] ?? false;
+                                    <div className="mt-4 space-y-2 border-l border-border pl-3">
+                                      {(roomsBySection.get(section.id) ?? []).map((room) => {
+                                        const normalizedTitle = normalizeRoomTitleForSection(room.title || "", section.title);
+                                        const { leaf } = splitRoomTitle(normalizedTitle);
 
                                         return (
-                                          <div key={groupKey} className="rounded border border-border bg-surface/30 p-2">
-                                            <button
-                                              type="button"
-                                              className="flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left"
-                                              onClick={() =>
-                                                setOpenWriteupGroups((prev) => ({
-                                                  ...prev,
-                                                  [groupKey]: !prev[groupKey],
-                                                }))
-                                              }
-                                            >
-                                              <span className="text-sm text-text-primary">📁 {groupName}</span>
-                                              <span className="text-text-secondary">{isGroupOpen ? "−" : "+"}</span>
-                                            </button>
-
-                                            <div className={`grid transition-all duration-300 ${isGroupOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-                                              <div className="overflow-hidden">
-                                                <div className="mt-2 space-y-2 border-l border-border pl-2">
-                                                  {groupRooms.map(({ room, leaf }) => (
-                                                    <div key={room.id} className="rounded border border-border p-3">
+                                          <div key={room.id} className="rounded border border-border p-3">
                                           <button
                                             type="button"
                                             className="flex w-full items-center justify-between gap-2 text-left"
@@ -789,14 +743,8 @@ export function DashboardClient() {
                                             </div>
                                           </div>
                                         </div>
-                                                  ))}
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
                                         );
-                                        });
-                                      })()}
+                                      })}
                                     </div>
                                   </div>
                                 </div>

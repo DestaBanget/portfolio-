@@ -65,7 +65,6 @@ function normalizeRoomTitleForSection(title: string, sectionTitle: string) {
 
 export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const sortedSections = useMemo(
     () => [...sections].sort((a, b) => (a.order_index_global ?? 0) - (b.order_index_global ?? 0)),
@@ -88,30 +87,6 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
       {sortedSections.map((section) => {
         const sectionOpen = openSections[section.id] ?? false;
         const sectionRooms = roomsBySection.get(section.id) ?? [];
-        const groupedRooms = sectionRooms.reduce<Record<string, { room: WriteupRoom; leaf: string }[]>>((acc, room) => {
-          const normalizedTitle = normalizeRoomTitleForSection(room.title || "", section.title);
-          const parsed = splitRoomTitle(normalizedTitle);
-
-          const hasExplicitGroup = Boolean(
-            parsed.group && parsed.group.toLowerCase() !== parsed.leaf.toLowerCase(),
-          );
-
-          if (!("__currentGroup" in acc)) {
-            (acc as Record<string, unknown>).__currentGroup = "Ungrouped";
-          }
-
-          const currentGroup = ((acc as Record<string, unknown>).__currentGroup as string) || "Ungrouped";
-          const groupName = hasExplicitGroup ? (parsed.group as string) : currentGroup;
-
-          if (hasExplicitGroup) {
-            (acc as Record<string, unknown>).__currentGroup = parsed.group as string;
-          }
-
-          acc[groupName] = [...(acc[groupName] ?? []), { room, leaf: parsed.leaf }];
-          return acc;
-        }, {});
-
-        delete (groupedRooms as Record<string, unknown>).__currentGroup;
 
         return (
           <div key={section.id} className="surface-card overflow-hidden">
@@ -134,65 +109,40 @@ export function WriteupTree({ sections, rooms }: WriteupTreeProps) {
                 <div className="border-t border-border px-4 py-3">
                   {sectionRooms.length === 0 ? <p className="text-xs text-text-muted">No public rooms.</p> : null}
 
-                  {Object.entries(groupedRooms).map(([groupName, groupRooms]) => {
-                    const groupKey = `${section.id}::${groupName}`;
-                    const groupOpen = openGroups[groupKey] ?? false;
+                  <div className="mt-4 space-y-1 border-l border-border/50 pl-3 md:pl-4">
+                    {(roomsBySection.get(section.id) ?? []).map((room) => {
+                      const { leaf } = splitRoomTitle(normalizeRoomTitleForSection(room.title || "", section.title));
 
-                    return (
-                      <div key={groupKey} className="mb-2 last:mb-0 rounded-md border border-border bg-surface/40">
-                        <button
-                          type="button"
-                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
-                          onClick={() =>
-                            setOpenGroups((prev) => ({
-                              ...prev,
-                              [groupKey]: !prev[groupKey],
-                            }))
-                          }
-                        >
-                          <span className="text-sm text-text-primary">📁 {groupName}</span>
-                          <span className="text-text-secondary">{groupOpen ? "−" : "+"}</span>
-                        </button>
-
-                        <div className={`grid transition-all duration-300 ${groupOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-                          <div className="overflow-hidden">
-                            <div className="border-t border-border px-3 py-2">
-                              {groupRooms.map(({ room, leaf }) => (
-                                <div key={room.id} className="mb-2 last:mb-0 rounded-md border border-border bg-surface px-3 py-2">
-                                  {room.content ? (
-                                    <Link href={`/writeups/${room.id}`} className="group flex items-center justify-between gap-2">
-                                      <div className="flex items-center gap-2">
-                                        <span>📄</span>
-                                        <span className="text-sm text-text-primary transition-colors group-hover:text-accent">
-                                          {leaf}
-                                        </span>
-                                        {room.difficulty ? (
-                                          <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
-                                            {room.difficulty}
-                                          </span>
-                                        ) : null}
-                                        {room.status === "completed" ? <span className="text-accent-green">✓</span> : null}
-                                      </div>
-                                    </Link>
-                                  ) : (
-                                    <div className="flex items-center gap-2 text-sm text-text-secondary">
-                                      <span>📄</span>
-                                      <span>{leaf}</span>
-                                      {room.difficulty ? (
-                                        <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider">
-                                          {room.difficulty}
-                                        </span>
-                                      ) : null}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
+                      return (
+                        <div key={room.id} className="group/room relative flex items-center justify-between rounded p-2 transition-colors hover:bg-surface-raised">
+                          {room.is_public && room.content ? (
+                            <Link href={`/writeups/${room.id}`} className="flex-1">
+                              <div className="flex items-center gap-2 text-sm text-text-secondary transition-colors group-hover/room:text-text-primary">
+                                <span className="text-accent-blue">📄</span>
+                                <span className="font-medium">{leaf}</span>
+                                {room.difficulty ? (
+                                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
+                                    {room.difficulty}
+                                  </span>
+                                ) : null}
+                                {room.status === "completed" ? <span className="text-accent-green">✓</span> : null}
+                              </div>
+                            </Link>
+                          ) : (
+                            <div className="flex items-center gap-2 text-sm text-text-secondary">
+                              <span>📄</span>
+                              <span>{leaf}</span>
+                              {room.difficulty ? (
+                                <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider">
+                                  {room.difficulty}
+                                </span>
+                              ) : null}
                             </div>
-                          </div>
+                          )}
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
