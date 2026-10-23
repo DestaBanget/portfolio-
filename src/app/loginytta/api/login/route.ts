@@ -20,12 +20,7 @@ export async function POST(req: NextRequest) {
   const valid = hash ? await bcrypt.compare(String(password ?? "").trim(), hash) : false;
 
   if (!valid) {
-    console.log("[admin-login] invalid password", {
-      hasHash: Boolean(hash),
-      hashPrefix: hash ? hash.slice(0, 4) : null,
-      hashLength: hash.length,
-      nodeEnv: process.env.NODE_ENV,
-    });
+    console.warn("[admin-login] invalid password");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

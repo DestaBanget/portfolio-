@@ -331,7 +331,7 @@ export function DashboardClient() {
               variant={active === s.key ? "outline" : "ghost"}
               size="sm"
               className={`w-full justify-start ${
-                active === s.key ? "bg-accent text-white hover:text-white" : ""
+                active === s.key ? "bg-accent text-accent-ink hover:text-accent-ink" : ""
               }`}
             >
               {s.label}
@@ -342,7 +342,7 @@ export function DashboardClient() {
 
       <main className="min-w-0 flex-1 rounded-xl border border-border bg-surface p-5">
         <header className="mb-6 flex items-center justify-between gap-3 border-b border-border pb-4">
-          <h1 className="font-display text-2xl text-text-primary">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Dashboard</h1>
           <div className="flex items-center gap-3">
             <Link href="/" target="_blank" className="text-sm text-accent hover:text-accent-light">
               View Site ↗
@@ -541,8 +541,8 @@ export function DashboardClient() {
                     }
                   >
                     <div className="flex items-center gap-2">
-                      <span className="font-display text-lg text-text-primary">{path.title}</span>
-                      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
+                      <span className="text-lg font-semibold text-text-primary">{path.title}</span>
+                      <span className="bg-surface-raised px-2 py-0.5 text-xs text-text-secondary">
                         {path.platform}
                       </span>
                     </div>

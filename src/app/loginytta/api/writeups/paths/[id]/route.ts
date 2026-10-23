@@ -3,11 +3,12 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const unauthorized = requireAdmin();
+  const { id } = await params;
+  const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
 
   const payload = await req.json();
@@ -18,7 +19,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       platform: payload.platform ?? "THM",
       order_index: payload.order_index ?? 0,
     })
-    .eq("id", params.id)
+    .eq("id", id)
     .select("*")
     .single();
 
@@ -27,10 +28,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_: NextRequest, { params }: Params) {
-  const unauthorized = requireAdmin();
+  const { id } = await params;
+  const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
 
-  const { error } = await supabaseAdmin.from("wu_paths").delete().eq("id", params.id);
+  const { error } = await supabaseAdmin.from("wu_paths").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Portfolio
 
-## Getting Started
+Personal site of Ferrel Destatiananda Edwardo: about, experience, TryHackMe writeups, projects and contact on one page, with full writeups under `/writeups`. Content lives in Supabase and is edited from the admin dashboard at `/loginytta`.
 
-First, run the development server:
+## Run locally
 
 ```bash
+npm ci
+cp .env.example .env.local   # then fill in the values below
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Variable | Used for |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Reading public content |
+| `SUPABASE_SERVICE_ROLE_KEY` | Admin dashboard writes and private writeups |
+| `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | Admin login |
+| `RESEND_API_KEY`, `CONTACT_EMAIL` | Contact form delivery |
+| `CONTACT_FROM` (optional) | Sender address on a domain verified in Resend; defaults to `onboarding@resend.dev` |
+| `HTB_PASSWORD` | Password for the private `/htb` page |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Layout
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- `src/app` routes. `/experience`, `/projects` and `/contact` redirect to sections of the home page (`next.config.mjs`). Public pages rebuild at most 60 seconds after a dashboard edit (`revalidate` in `layout.tsx`); `/writeups` renders on every request.
+- `src/lib` data access: `profile.ts`, `experience.ts`, `projects.ts`, `writeups.ts` (paths, sections, rooms and solved counts).
+- `src/components` shared UI. `RoomCells` draws the solved/unsolved board used on the home page and the writeups page.
+- Design tokens are RGB channels in `src/app/globals.css`, mapped to Tailwind colours in `tailwind.config.ts`. Type: Instrument Sans for everything, IBM Plex Mono for dates and counts.

@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function GET() {
-  const unauthorized = requireAdmin();
+  const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
 
   const { data, error } = await supabaseAdmin.from("wu_sections").select("*").order("order_index", { ascending: true });
@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const unauthorized = requireAdmin();
+  const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
 
   const payload = await req.json();

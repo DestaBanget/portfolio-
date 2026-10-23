@@ -2,129 +2,257 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #0d1117;
-  --surface: #161b22;
-  --border: #253047;
-  --text-primary: #ffffff;
-  --text-secondary: #c9d1d9;
-  --text-tertiary: #8b949e;
-  --text-muted: #6e7681;
-  --accent: #4d7eff;
-  --accent-light: #7aa3ff;
-  --accent-warm: #f97316;
-  --accent-green: #22c55e;
+/*
+ * Colour tokens are stored as RGB channels so Tailwind opacity modifiers
+ * (bg-accent/10, border-border/50) work. Palette: blue-black ground with
+ * cool greys, one clear blue for actions, links and the current role.
+ */
+:root,
+html.dark {
+  --bg: 10 11 14;
+  --surface: 18 20 25;
+  --surface-raised: 28 31 38;
+  --border: 38 42 51;
+  --text-primary: 241 243 247;
+  --text-secondary: 186 191 202;
+  --text-tertiary: 146 152 165;
+  --text-muted: 118 124 138;
+  --accent: 110 168 255;
+  --accent-light: 150 192 255;
+  --accent-ink: 8 14 28;
+  --accent-warm: 244 184 96;
+  --accent-green: 110 168 255;
+  --danger: 248 113 113;
+  color-scheme: dark;
 }
 
 html.light {
-  --bg: #f0f4f8;
-  --surface: #ffffff;
-  --border: #cbd5e1;
-  --text-primary: #0f172a;
-  --text-secondary: #1e293b;
-  --text-tertiary: #475569;
-  --text-muted: #64748b;
-  --accent: #1d4ed8;
-  --accent-light: #3b82f6;
-  --accent-warm: #ea580c;
-  --accent-green: #16a34a;
-}
-
-body {
-  position: relative;
-  overflow-x: hidden;
-  background-color: var(--bg);
-  color: var(--text-primary);
-  background-image: radial-gradient(circle, rgba(37, 48, 71, 0.4) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
-.hero-name {
-  text-shadow: none;
-}
-
-.dark .hero-name {
-  text-shadow: 0 2px 60px rgba(0, 0, 0, 1), 0 1px 12px rgba(0, 0, 0, 1);
-}
-
-html.light .home-role-chip {
-  color: #111827;
-  border-color: #111827;
-  background: transparent;
-}
-
-html.dark .home-role-chip {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  --bg: 248 249 251;
+  --surface: 255 255 255;
+  --surface-raised: 240 242 246;
+  --border: 223 227 234;
+  --text-primary: 15 18 25;
+  --text-secondary: 60 66 80;
+  --text-tertiary: 90 97 112;
+  --text-muted: 110 117 132;
+  --accent: 30 86 214;
+  --accent-light: 37 99 235;
+  --accent-ink: 255 255 255;
+  --accent-warm: 154 91 0;
+  --accent-green: 30 86 214;
+  --danger: 185 28 28;
+  color-scheme: light;
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  html {
+    background-color: rgb(var(--bg));
+    color: rgb(var(--text-primary));
+    scroll-behavior: smooth;
+    /* Leaves room for the sticky header when jumping to a section. */
+    scroll-padding-top: 5rem;
   }
 
-  a {
-    @apply transition-colors duration-200;
+  body {
+    line-height: 1.6;
   }
 
   ::selection {
-    background-color: var(--accent);
-    color: #ffffff;
+    background-color: rgb(var(--accent));
+    color: rgb(var(--accent-ink));
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 }
 
 @layer components {
-  .surface-card {
-    @apply rounded-xl border border-border bg-surface shadow-card transition-all duration-150;
+  .container-page {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
   }
 
-  .surface-card-hover {
-    @apply hover:-translate-y-0.5 hover:border-accent-light;
+  @media (min-width: 768px) {
+    .container-page {
+      padding-inline: 2rem;
+    }
   }
 
-  .section-divider {
-    height: 1px;
-    border: 0;
-    background: linear-gradient(90deg, rgba(47, 93, 227, 0.8), rgba(47, 93, 227, 0));
+  .card {
+    border: 1px solid rgb(var(--border));
+    background-color: rgb(var(--surface));
+    border-radius: 1rem;
   }
 
-  .fade-step-0 {
-    animation: fadeIn 420ms ease-out both;
-    animation-delay: 0ms;
+  .link {
+    text-decoration-line: underline;
+    text-decoration-color: rgb(var(--text-muted));
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition: color 150ms ease, text-decoration-color 150ms ease;
   }
 
-  .fade-step-1 {
-    animation: fadeIn 420ms ease-out both;
-    animation-delay: 100ms;
-  }
-
-  .fade-step-2 {
-    animation: fadeIn 420ms ease-out both;
-    animation-delay: 200ms;
+  .link:hover {
+    color: rgb(var(--accent));
+    text-decoration-color: currentColor;
   }
 }
 
-@keyframes drift1 {
-  0% {
-    transform: translate(0, 0) scale(1);
+/*
+ * Motion: a short entrance on the hero, a fade as sections scroll in and
+ * view transitions between pages. Content never waits on script, and
+ * visitors who ask for reduced motion get the static page.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .enter {
+    animation: rise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 80ms);
   }
-  100% {
-    transform: translate(130px, 90px) scale(1.2);
+
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+
+  /* The experience rail draws itself downward as each role scrolls into view. */
+  @supports (animation-timeline: view()) {
+    .rail {
+      transform-origin: top;
+      animation: draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 45%;
+    }
+  }
+
+  .nav-glide {
+    transition:
+      transform 380ms cubic-bezier(0.3, 0.9, 0.25, 1),
+      width 380ms cubic-bezier(0.3, 0.9, 0.25, 1),
+      opacity 200ms ease;
+  }
+
+  .menu-item {
+    animation: rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+
+  /* Underlines grow from the left instead of blinking on. */
+  .grow-line {
+    background: linear-gradient(currentColor, currentColor) no-repeat left bottom / 0% 1px;
+    transition: background-size 300ms cubic-bezier(0.3, 0.9, 0.25, 1);
+  }
+
+  .grow-line:hover,
+  .group:hover .grow-line {
+    background-size: 100% 1px;
+  }
+
+  /*
+   * Page changes: the header holds still, the old page sinks away quickly and
+   * the new one settles in. Shared names let a heading travel between pages.
+   */
+  .site-header {
+    view-transition-name: site-header;
+  }
+
+  .page {
+    view-transition-name: page;
+  }
+
+  ::view-transition-group(page) {
+    animation: none;
+  }
+
+  ::view-transition-old(page) {
+    animation: page-out 160ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  ::view-transition-new(page) {
+    animation: page-in 460ms cubic-bezier(0.2, 0.7, 0.2, 1) 60ms both;
+  }
+
+  ::view-transition-group(writeups-title) {
+    animation-duration: 520ms;
+    animation-timing-function: cubic-bezier(0.3, 0.9, 0.25, 1);
+  }
+
+  /* Theme switch: the new palette opens as a circle from the toggle. */
+  html.theme-switch::view-transition-old(root),
+  html.theme-switch::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  html.theme-switch::view-transition-new(root) {
+    animation: theme-open 560ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  html.theme-switch .site-header,
+  html.theme-switch .page {
+    view-transition-name: none;
   }
 }
 
-@keyframes drift2 {
-  0% {
-    transform: translate(0, 0) scale(1);
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
-  100% {
-    transform: translate(-110px, -70px) scale(1.1);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes theme-open {
+  from {
+    clip-path: circle(0 at var(--theme-x, 100%) var(--theme-y, 0));
+  }
+  to {
+    clip-path: circle(150vmax at var(--theme-x, 100%) var(--theme-y, 0));
   }
 }

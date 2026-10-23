@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -16,31 +17,26 @@ function normalizeValue(raw?: string) {
 
 const SESSION_VALUE = normalizeValue(process.env.ADMIN_SESSION_SECRET);
 
-export function isAdminAuthenticated(): boolean {
+function matchesSession(value: string) {
+  // An unset secret must never let an empty cookie through.
+  if (!SESSION_VALUE || !value) return false;
+  const a = Buffer.from(value);
+  const b = Buffer.from(SESSION_VALUE);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+export async function isAdminAuthenticated(): Promise<boolean> {
   try {
-    const cookieStore = cookies();
-    const cookie = cookieStore.get(SESSION_COOKIE);
-    const cookieValue = normalizeValue(cookie?.value);
-    const isMatch = cookieValue === SESSION_VALUE;
-
-    console.log("[admin-auth] cookie", {
-      cookieValue: cookieValue || null,
-      sessionValue: SESSION_VALUE || null,
-      cookieLength: cookieValue.length,
-      sessionLength: SESSION_VALUE.length,
-      matches: isMatch,
-      nodeEnv: process.env.NODE_ENV,
-    });
-
-    return isMatch;
+    const cookieStore = await cookies();
+    return matchesSession(normalizeValue(cookieStore.get(SESSION_COOKIE)?.value));
   } catch (error) {
     console.error("[admin-auth] failed to read cookies", error);
     return false;
   }
 }
 
-export function requireAdmin() {
-  if (isAdminAuthenticated()) return null;
+export async function requireAdmin() {
+  if (await isAdminAuthenticated()) return null;
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
