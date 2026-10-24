@@ -186,6 +186,7 @@ export function SiteHeader({ name }: { name: string }) {
       data-scrolled={scrolled || open ? "" : undefined}
       className="site-header sticky top-0 z-40 border-b border-transparent transition-[transform,background-color,border-color] duration-300 ease-out data-[hidden]:-translate-y-full data-[scrolled]:border-border/60 data-[scrolled]:bg-bg/90 data-[scrolled]:backdrop-blur"
     >
+      <span aria-hidden className="scroll-progress absolute inset-x-0 bottom-[-1px] h-px origin-left bg-accent" />
       <div className="container-page flex h-16 items-center justify-between gap-6">
         <Link href="/" className="group flex items-baseline gap-2">
           <span className="font-semibold tracking-tight">{shortName}</span>

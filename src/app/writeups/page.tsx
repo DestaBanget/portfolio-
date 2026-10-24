@@ -59,7 +59,7 @@ export default async function WriteupsPage() {
 
                 <div className="mt-6 divide-y divide-border overflow-hidden rounded-xl border border-border">
                   {path.sections.map((section) => (
-                    <details key={section.id} className="group">
+                    <details key={section.id} className="group expand">
                       <summary className="flex min-h-14 cursor-pointer list-none items-center gap-4 px-4 py-3 transition-colors hover:bg-surface-raised/60 md:px-5 [&::-webkit-details-marker]:hidden">
                         <span className="flex-1 font-medium">{section.title}</span>
                         <span className="text-sm text-text-tertiary">

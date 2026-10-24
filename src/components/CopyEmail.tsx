@@ -27,8 +27,18 @@ export function CopyEmail({ email }: { email: string }) {
         onClick={copy}
         className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm text-text-secondary transition-colors hover:bg-surface-raised hover:text-text-primary"
       >
-        {copied ? <Check className="text-accent" /> : <Copy />}
-        <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+        {/* Both states stay mounted and cross-fade through a short blur, so the label swap reads as one change. */}
+        <span className="swap" data-on={copied ? "" : undefined}>
+          <span className="swap-a inline-flex items-center gap-1.5">
+            <Copy /> Copy
+          </span>
+          <span className="swap-b inline-flex items-center gap-1.5">
+            <Check className="text-accent" /> Copied
+          </span>
+        </span>
+        <span aria-live="polite" className="sr-only">
+          {copied ? "Copied" : ""}
+        </span>
       </button>
     </div>
   );

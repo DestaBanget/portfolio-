@@ -23,6 +23,9 @@ html.dark {
   --accent-warm: 244 184 96;
   --accent-green: 110 168 255;
   --danger: 248 113 113;
+  /* Strong curves: ease-out for things arriving, in-out for things moving on screen. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   color-scheme: dark;
 }
 
@@ -94,6 +97,147 @@ html.light {
     border-radius: 1rem;
   }
 
+  /* Letters still being decoded show in the accent, so the name resolves from blue noise into ink. */
+  .decrypt-glyph {
+    color: rgb(var(--accent));
+  }
+
+  /* Hero backdrop: a faint dot grid everywhere, a brighter patch where the light is. */
+  .spotlight-dots,
+  .spotlight-lit {
+    background-image: radial-gradient(rgb(var(--text-muted) / 0.35) 1px, transparent 1.5px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(to bottom, black 40%, transparent);
+  }
+
+  .spotlight-dots {
+    opacity: 0.35;
+  }
+
+  .spotlight-lit {
+    background-image:
+      radial-gradient(rgb(var(--accent)) 1.2px, transparent 1.7px),
+      radial-gradient(circle at var(--mx, 70%) var(--my, 30%), rgb(var(--accent) / 0.1), transparent 70%);
+    background-size:
+      22px 22px,
+      100% 100%;
+    mask-image: radial-gradient(260px circle at var(--mx, 70%) var(--my, 30%), black, transparent 75%);
+    opacity: 0.8;
+  }
+
+  /* Writeups list: a light that follows the mouse across the rows. */
+  .pointer-glow {
+    position: relative;
+  }
+
+  .pointer-glow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(
+      420px circle at var(--gx, 50%) var(--gy, -200px),
+      rgb(var(--accent) / 0.09),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+
+  .pointer-glow:hover::before {
+    opacity: 1;
+  }
+
+  .row-title {
+    display: inline-block;
+    transition: transform 350ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover .row-title {
+      transform: translateX(6px);
+    }
+  }
+
+  .caret {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.1em;
+    margin-left: 2px;
+    vertical-align: -0.2em;
+    background: rgb(var(--accent));
+  }
+
+  /* Contact card: a beam of light runs around its border. */
+  .beam::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: conic-gradient(
+      from var(--beam-angle),
+      transparent 0deg,
+      transparent 280deg,
+      rgb(var(--accent)) 340deg,
+      transparent 360deg
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+  }
+
+  /* Contest results: the hovered row comes forward. */
+  .award-event {
+    display: inline-block;
+    transition:
+      transform 300ms var(--ease-out),
+      color 200ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .award:hover .award-event {
+      transform: translateX(6px);
+      color: rgb(var(--accent-light));
+    }
+  }
+
+  /* Hidden unless the browser can tie it to scroll (see the motion block below). */
+  .scroll-progress {
+    transform: scaleX(0);
+  }
+
+  /* Two labels stacked in one cell; the button keeps the width of the longer one. */
+  .swap {
+    display: inline-grid;
+  }
+
+  .swap > * {
+    grid-area: 1 / 1;
+    transition:
+      opacity 200ms ease,
+      filter 200ms ease,
+      transform 200ms var(--ease-out);
+  }
+
+  .swap-b,
+  .swap[data-on] .swap-a {
+    opacity: 0;
+    filter: blur(2px);
+    transform: scale(0.96);
+  }
+
+  .swap[data-on] .swap-b {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
   .link {
     text-decoration-line: underline;
     text-decoration-color: rgb(var(--text-muted));
@@ -115,8 +259,146 @@ html.light {
  */
 @media (prefers-reduced-motion: no-preference) {
   .enter {
-    animation: rise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation: rise 700ms var(--ease-out) both;
     animation-delay: calc(var(--i, 0) * 80ms);
+  }
+
+  .magnetic {
+    transition: transform 500ms cubic-bezier(0.2, 1.4, 0.4, 1);
+  }
+
+  .caret {
+    animation: blink 1s steps(1) infinite;
+  }
+
+  .clock-colon {
+    animation: blink 2s steps(1) infinite;
+  }
+
+  .beam::after {
+    opacity: 1;
+    animation: spin-beam 6s linear infinite;
+  }
+
+  /* With no cursor to follow, the lit patch wanders across the grid by itself. */
+  .spotlight:not([data-tracking]) .spotlight-lit {
+    animation: wander 14s var(--ease-in-out) infinite alternate;
+  }
+
+  /* Arrows lean toward where they lead when their link is hovered. */
+  .nudge {
+    transition: transform 250ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover .nudge {
+      transform: translateX(3px);
+    }
+  }
+
+  /* List rows: the hover fill sweeps in from the left and leaves quickly. */
+  .row-wipe {
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 200ms ease-out;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover > .row-wipe {
+      clip-path: inset(0 0 0 0);
+      transition: clip-path 450ms var(--ease-out);
+    }
+  }
+
+  /* Folded sections open to their real height instead of snapping. */
+  @supports selector(::details-content) {
+    .expand {
+      interpolate-size: allow-keywords;
+    }
+
+    .expand::details-content {
+      block-size: 0;
+      overflow: clip;
+      opacity: 0;
+      transition:
+        block-size 320ms var(--ease-out),
+        opacity 240ms ease,
+        content-visibility 320ms allow-discrete;
+    }
+
+    .expand[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+  }
+
+  @supports (animation-timeline: scroll()) {
+    /* A hairline under the header fills as the page is read. */
+    .scroll-progress {
+      animation: grow-x linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+
+  @supports (animation-timeline: view()) {
+    /* Section headings wipe up into place as they arrive. */
+    .wipe-in {
+      animation: wipe-up linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 70%;
+    }
+
+    /* About: the bio brightens word by word as it is scrolled up the screen. */
+    .lit-word {
+      animation: lit linear both;
+      animation-timeline: view();
+      animation-range: cover 10% cover 35%;
+    }
+
+    /* Experience: the role in the middle of the screen is in focus, the others recede. */
+    .focus-item {
+      animation: focus linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+
+    .row-in {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 80%;
+    }
+
+    /* Projects: the command types itself, then its output appears line by line.
+       Every line follows the terminal's own timeline so they stay in sequence. */
+    .terminal {
+      view-timeline: --terminal;
+    }
+
+    .terminal .type-line {
+      display: inline-block;
+      animation: type steps(14) both;
+      animation-timeline: --terminal;
+      animation-range: entry 50% cover 25%;
+    }
+
+    .terminal .type-out {
+      animation: rise linear both;
+      animation-timeline: --terminal;
+      animation-range: cover 25% cover 30%;
+    }
+
+    .terminal .type-out:nth-child(3) {
+      animation-range: cover 29% cover 34%;
+    }
+
+    .terminal .type-out:nth-child(4) {
+      animation-range: cover 33% cover 38%;
+    }
+
+    .dot-pop {
+      animation: pop linear both;
+      animation-timeline: view();
+      animation-range: entry 30% entry 80%;
+    }
   }
 
   @supports (animation-timeline: view()) {
@@ -225,6 +507,108 @@ html.light {
   }
 }
 
+@keyframes lit {
+  from {
+    color: rgb(var(--text-muted) / 0.6);
+  }
+  to {
+    color: rgb(var(--text-primary));
+  }
+}
+
+@keyframes focus {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  25%,
+  85% {
+    opacity: 1;
+  }
+}
+
+@keyframes type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes spin-beam {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+@property --beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes wander {
+  0% {
+    --mx: 15%;
+    --my: 20%;
+  }
+  50% {
+    --mx: 85%;
+    --my: 45%;
+  }
+  100% {
+    --mx: 40%;
+    --my: 75%;
+  }
+}
+
+/* Registered so the wandering spotlight can interpolate its position. */
+@property --mx {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 70%;
+}
+
+@property --my {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 30%;
+}
+
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes wipe-up {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(0.4em);
+  }
+  to {
+    clip-path: inset(0 0 -0.2em 0);
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
 @keyframes draw {
   from {
     transform: scaleY(0);
@@ -245,6 +629,7 @@ html.light {
   from {
     opacity: 0;
     transform: translateY(14px);
+    filter: blur(3px);
   }
 }
 

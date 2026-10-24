@@ -3,9 +3,25 @@ import { Link } from "next-view-transitions";
 import { ContactForm } from "@/components/ContactForm";
 import { CopyEmail } from "@/components/CopyEmail";
 import { ArrowRight, ArrowUpRight, Download } from "@/components/Icons";
+import { CountUp } from "@/components/motion/CountUp";
+import { DecryptText } from "@/components/motion/DecryptText";
+import { LocalTime } from "@/components/motion/LocalTime";
+import { Magnetic } from "@/components/motion/Magnetic";
+import { PointerGlow } from "@/components/motion/PointerGlow";
+import { ScrollLitText } from "@/components/motion/ScrollLitText";
+import { Spotlight } from "@/components/motion/Spotlight";
 import { SocialLinks } from "@/components/SiteFooter";
 import { buttonBase, buttonSizes, buttonVariants } from "@/components/ui/Button";
-import { awards, certifications, education, languages, location, topSkills } from "@/data/highlights";
+import {
+  awards,
+  certifications,
+  education,
+  languages,
+  location,
+  otherResults,
+  teaching,
+  topSkills,
+} from "@/data/highlights";
 import { getExperience, type Experience } from "@/lib/experience";
 import { displayUrl, getProfile } from "@/lib/profile";
 import { getProjects, projectStatusLabel, projectTypeLabel, type Project } from "@/lib/projects";
@@ -40,7 +56,7 @@ function Section({
           <div className="lg:sticky lg:top-24">
             <h2
               id={`${id}-title`}
-              className="w-fit text-2xl font-semibold tracking-tight md:text-3xl"
+              className="wipe-in w-fit text-2xl font-semibold tracking-tight md:text-3xl"
               style={transitionName ? { viewTransitionName: transitionName } : undefined}
             >
               {title}
@@ -57,7 +73,9 @@ function Section({
 
 function Chip({ children }: { children: ReactNode }) {
   return (
-    <li className="rounded-md border border-border bg-surface-raised/60 px-2.5 py-1 text-sm text-text-secondary">{children}</li>
+    <li className="rounded-md border border-border bg-surface-raised/60 px-2.5 py-1 text-sm text-text-secondary">
+      {children}
+    </li>
   );
 }
 
@@ -74,14 +92,18 @@ function TrackRecord() {
       </h2>
 
       <ul className="mt-5 space-y-3.5">
-        {awards.map((award) => (
-          <li key={award.event} className="grid grid-cols-[6rem_1fr] items-baseline gap-3">
+        {awards.map((award, i) => (
+          <li
+            key={award.event}
+            className="award enter grid grid-cols-[6rem_1fr] items-baseline gap-3"
+            style={delay(5 + i)}
+          >
             <span
               className={`font-mono text-xs uppercase tracking-wide ${award.place === "Finalist" ? "text-text-tertiary" : "text-accent"}`}
             >
               {award.place}
             </span>
-            <span>{award.event}</span>
+            <span className="award-event">{award.event}</span>
           </li>
         ))}
       </ul>
@@ -100,11 +122,11 @@ function TrackRecord() {
 
 function ExperienceItem({ item }: { item: Experience }) {
   return (
-    <li className="reveal relative pb-10 pl-8 last:pb-0">
+    <li className="focus-item relative pb-10 pl-8 last:pb-0">
       <span aria-hidden className="rail absolute bottom-0 left-[5px] top-2 w-px bg-border" />
       <span
         aria-hidden
-        className={`absolute left-0 top-1.5 size-[11px] rounded-full border-2 border-bg ${item.current ? "bg-accent" : "bg-text-muted"}`}
+        className={`dot-pop absolute left-0 top-1.5 size-[11px] rounded-full border-2 border-bg ${item.current ? "bg-accent" : "bg-text-muted"}`}
       />
 
       <h3 className="text-lg font-semibold leading-snug">{item.role}</h3>
@@ -170,14 +192,20 @@ function ProjectCard({ project }: { project: Project }) {
   );
 }
 
-function PathRow({ path }: { path: Path }) {
+function PathRow({ path, index }: { path: Path; index: number }) {
   return (
-    <li>
+    <li className="row-in">
       <Link
         href={`/writeups#${path.id}`}
-        className="group flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-5 py-4 transition-colors hover:bg-surface-raised/60"
+        className="group relative isolate flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-5 py-5"
       >
-        <span className="grow-line font-medium">{path.title}</span>
+        <span aria-hidden className="row-wipe absolute inset-0 -z-10 bg-surface-raised/70" />
+        <span className="flex items-baseline gap-4">
+          <span aria-hidden className="font-mono text-xs text-text-muted transition-colors group-hover:text-accent">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <span className="row-title text-lg font-medium">{path.title}</span>
+        </span>
         <span className="flex items-center gap-4 text-sm text-text-tertiary">
           <span>
             {platformName[path.platform]} · {path.rooms} rooms
@@ -200,67 +228,96 @@ export default async function Home() {
 
   const current = experience.find((item) => item.current);
   const skills = Array.from(new Set([...topSkills, ...experience.flatMap((item) => item.skills)]));
-  const rooms = paths.reduce((sum, path) => sum + path.rooms, 0);
+
+  // The headline numbers: contests, security training, people taught.
+  const stats = [
+    { label: "Contest finals and podiums", value: awards.length + otherResults.length },
+    { label: "TryHackMe learning paths", value: paths.length },
+    { label: "Students mentored in the lab", value: teaching.labStudents },
+  ];
 
   const facts = [
     { label: "Studying", value: `${education.degree}, ${education.school} (${education.years})` },
     { label: "Based in", value: location },
     { label: "Languages", value: languages },
-    rooms > 0 ? { label: "Labs", value: `${rooms} TryHackMe rooms across ${paths.length} learning paths` } : null,
+    paths.length > 0 ? { label: "TryHackMe", value: paths.map((path) => path.title).join(", ") } : null,
   ].filter((fact) => fact !== null);
 
   return (
     <>
-      <section className="container-page grid gap-14 pb-16 pt-14 md:pb-24 md:pt-24 lg:grid-cols-12 lg:gap-12">
-        <div className="lg:col-span-7 lg:self-center">
-          {current ? (
-            <p className="enter text-sm text-text-tertiary">
-              Now{" "}
-              <span className="text-text-secondary">
-                {/* The legal name in brackets ("Defenxor (PT ...)") is too long for a status line. */}
-                {current.role}, {current.company.replace(/\s*\(.*\)\s*$/, "")}
-              </span>
-            </p>
-          ) : null}
-
-          <h1
-            className="enter mt-5 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.25rem]"
-            style={delay(1)}
-          >
-            {profile.name}
-          </h1>
-
-          <p className="enter mt-6 max-w-xl text-lg text-text-secondary" style={delay(2)}>
-            Security analyst intern and Computer Science student at Universitas Brawijaya. I compete in programming
-            contests, set and judge problems for them, and teach algorithms.
-          </p>
-
-          <div className="enter mt-9 flex flex-wrap items-center gap-3" style={delay(3)}>
-            <a href="#contact" className={`${buttonBase} ${buttonVariants.primary} ${buttonSizes.lg}`}>
-              Get in touch
-            </a>
-            {profile.cvUrl ? (
-              <a
-                href={profile.cvUrl}
-                target="_blank"
-                rel="noreferrer"
-                className={`${buttonBase} ${buttonVariants.outline} ${buttonSizes.lg}`}
-              >
-                <Download /> Download CV
-              </a>
+      <div className="relative isolate overflow-hidden">
+        <Spotlight />
+        <section className="container-page grid gap-14 pb-16 pt-14 md:pb-24 md:pt-24 lg:grid-cols-12 lg:gap-12">
+          <div className="lg:col-span-7 lg:self-center">
+            {current ? (
+              <p className="enter text-sm text-text-tertiary">
+                Now{" "}
+                <span className="text-text-secondary">
+                  {/* The legal name in brackets ("Defenxor (PT ...)") is too long for a status line. */}
+                  {current.role}, {current.company.replace(/\s*\(.*\)\s*$/, "")}
+                </span>
+              </p>
             ) : null}
-            <SocialLinks profile={profile} className="ml-1" />
-          </div>
-        </div>
 
-        <TrackRecord />
-      </section>
+            <h1
+              className="enter mt-5 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.25rem]"
+              style={delay(1)}
+            >
+              <DecryptText text={profile.name} />
+            </h1>
+
+            <p className="enter mt-6 max-w-xl text-lg text-text-secondary" style={delay(2)}>
+              Security analyst intern and Computer Science student at Universitas Brawijaya. I compete in programming
+              contests, set and judge problems for them, and teach algorithms.
+            </p>
+
+            <div className="enter mt-9 flex flex-wrap items-center gap-3" style={delay(3)}>
+              <Magnetic>
+                <a href="#contact" className={`group ${buttonBase} ${buttonVariants.primary} ${buttonSizes.lg}`}>
+                  Get in touch
+                  <ArrowRight className="nudge" />
+                </a>
+              </Magnetic>
+              {profile.cvUrl ? (
+                <a
+                  href={profile.cvUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${buttonBase} ${buttonVariants.outline} ${buttonSizes.lg}`}
+                >
+                  <Download /> Download CV
+                </a>
+              ) : null}
+              <SocialLinks profile={profile} className="ml-1" />
+            </div>
+
+            <dl className="enter mt-12 grid max-w-lg grid-cols-3 gap-4 border-t border-border pt-6" style={delay(4)}>
+              {stats.map((stat) => (
+                <div key={stat.label}>
+                  <dt className="sr-only">{stat.label}</dt>
+                  <dd>
+                    <span className="block text-3xl font-semibold tracking-tight md:text-4xl">
+                      <CountUp value={stat.value} />
+                    </span>
+                    <span aria-hidden className="mt-1 block text-sm leading-snug text-text-tertiary">
+                      {stat.label}
+                    </span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <TrackRecord />
+        </section>
+      </div>
 
       <Section id="about" title="About">
         <div className="reveal">
-          <p className="max-w-3xl whitespace-pre-line text-lg leading-relaxed text-text-secondary md:text-xl md:leading-relaxed">
-            {profile.bio}
-          </p>
+          <ScrollLitText
+            text={profile.bio}
+            className="max-w-3xl text-xl font-medium leading-relaxed tracking-tight md:text-2xl md:leading-relaxed"
+          />
 
           <div className="mt-12 grid gap-10 md:grid-cols-2 md:gap-12">
             <dl className="divide-y divide-border border-y border-border self-start">
@@ -320,15 +377,26 @@ export default async function Home() {
             ))}
           </ul>
         ) : (
-          <Link
-            href="/writeups"
-            className="reveal group flex flex-col gap-2 rounded-2xl border border-dashed border-border p-6 transition-colors hover:border-text-muted sm:flex-row sm:items-center sm:justify-between"
-          >
-            <span className="text-text-secondary">No public projects yet. Until then, the writeups show the work.</span>
-            <span className="inline-flex items-center gap-1.5 font-medium group-hover:text-accent">
-              Read the writeups <ArrowRight />
-            </span>
-          </Link>
+          // A shell session that types itself out as it scrolls into view.
+          <div className="terminal card overflow-clip font-mono text-sm leading-relaxed">
+            <p className="border-b border-border px-5 py-3 text-xs text-text-tertiary">ferrel@portfolio: ~/projects</p>
+            <div className="space-y-2 p-5 md:p-6">
+              <p>
+                <span className="text-accent">$</span> <span className="type-line">ls --public .</span>
+                <span aria-hidden className="caret" />
+              </p>
+              <p className="type-out text-text-tertiary">total 0</p>
+              <p className="type-out text-text-secondary">
+                Nothing public yet. The writeups show the work in the meantime.
+              </p>
+              <p className="type-out pt-2">
+                <Link href="/writeups" className="group inline-flex items-center gap-1.5 text-accent">
+                  <span className="grow-line">cd ../writeups</span>
+                  <ArrowRight className="nudge" />
+                </Link>
+              </p>
+            </div>
+          </div>
         )}
       </Section>
 
@@ -339,26 +407,34 @@ export default async function Home() {
           transitionName="writeups-title"
           intro="Notes from the TryHackMe learning paths I have finished."
           action={
-            <Link href="/writeups" className="group inline-flex items-center gap-1.5 text-sm font-medium hover:text-accent">
+            <Link
+              href="/writeups"
+              className="group inline-flex items-center gap-1.5 text-sm font-medium hover:text-accent"
+            >
               <span className="grow-line">All writeups</span>
               <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           }
         >
-          <ul className="card reveal divide-y divide-border overflow-hidden">
-            {paths.map((path) => (
-              <PathRow key={path.id} path={path} />
-            ))}
-          </ul>
+          <PointerGlow className="card reveal overflow-clip">
+            <ul className="divide-y divide-border">
+              {paths.map((path, i) => (
+                <PathRow key={path.id} path={path} index={i} />
+              ))}
+            </ul>
+          </PointerGlow>
         </Section>
       ) : null}
 
       <Section id="contact" title="Get in touch">
-        <div className="card reveal grid gap-10 p-6 md:p-10 xl:grid-cols-2 xl:gap-14">
+        <div className="card beam reveal relative grid gap-10 p-6 md:p-10 xl:grid-cols-2 xl:gap-14">
           <div>
             <p className="text-lg text-text-secondary">
               {profile.contactNote ?? "Write to me about SOC work, web security, or a contest you're running."}
             </p>
+            <div className="mt-6">
+              <LocalTime place={location.split(",")[0]} />
+            </div>
             <div className="mt-8 space-y-3">
               {profile.email ? <CopyEmail email={profile.email} /> : null}
               {profile.whatsapp ? (
