@@ -4,46 +4,79 @@
 
 /*
  * Colour tokens are stored as RGB channels so Tailwind opacity modifiers
- * (bg-accent/10, border-border/50) work. Palette: blue-black ground with
- * cool greys, one clear blue for actions, links and the current role.
+ * (bg-accent/10, border-border/50) work. Deep navy (main) carries the page.
+ * Ice cyan (second) carries the company names, the colour pools and the crest
+ * of the skies. Mango (accent) is the warm colour that collides with all that
+ * blue: the buttons, the figures, a first place, the marker under the intro,
+ * hover marks, the rule and glint of the section titles. It stays sharp, small
+ * and never becomes a haze, so it reads as a signal rather than a second theme.
  */
 :root,
 html.dark {
-  --bg: 10 11 14;
-  --surface: 18 20 25;
-  --surface-raised: 28 31 38;
-  --border: 38 42 51;
-  --text-primary: 241 243 247;
-  --text-secondary: 186 191 202;
-  --text-tertiary: 146 152 165;
-  --text-muted: 118 124 138;
-  --accent: 110 168 255;
-  --accent-light: 150 192 255;
-  --accent-ink: 8 14 28;
-  --accent-warm: 244 184 96;
-  --accent-green: 110 168 255;
-  --danger: 248 113 113;
+  --bg: 10 18 42;
+  --surface: 16 26 56;
+  --surface-raised: 23 35 70;
+  --border: 38 52 92;
+  --text-primary: 246 248 252;
+  --text-secondary: 208 218 240;
+  --text-tertiary: 168 182 214;
+  --text-muted: 136 150 186;
+  --accent: 255 178 30;
+  --accent-light: 255 196 84;
+  --accent-ink: 10 18 42;
+  /* The accent as text and fine marks. On the dark ground it is the accent itself. */
+  --accent-text: 255 178 30;
+  /* The marker under highlighted words: a fine stroke on dark, a highlighter band on light. */
+  --mark-h: 0.14em;
+  --mark-color: rgb(var(--accent));
+  --second: 98 200 255;
+  --second-light: 150 220 255;
+  --second-ink: 10 18 42;
+  --danger: 252 129 129;
+  --sky-main: 10 18 42;
+  --sky-second: 18 40 100;
+  --sky-mid: 30 96 200;
+  --sky-accent: 72 176 240;
+  /* How strongly the section washes tint the ground. */
+  --wash-strength: 0.3;
+  --wash-royal: 37 99 235;
   /* Strong curves: ease-out for things arriving, in-out for things moving on screen. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   color-scheme: dark;
 }
 
+/*
+ * Light is its own design, not the dark page with the lights on: a cool daylight
+ * ground, navy ink (the main colour carried over as type), a brighter daylight sky,
+ * mango kept for fills, a deeper amber for accent text and fine marks, and the
+ * underline under key words turned into a highlighter band.
+ */
 html.light {
-  --bg: 248 249 251;
-  --surface: 255 255 255;
-  --surface-raised: 240 242 246;
-  --border: 223 227 234;
-  --text-primary: 15 18 25;
-  --text-secondary: 60 66 80;
-  --text-tertiary: 90 97 112;
-  --text-muted: 110 117 132;
-  --accent: 30 86 214;
-  --accent-light: 37 99 235;
-  --accent-ink: 255 255 255;
-  --accent-warm: 154 91 0;
-  --accent-green: 30 86 214;
+  --bg: 240 244 250;
+  --surface: 230 237 248;
+  --surface-raised: 219 228 244;
+  --border: 198 210 232;
+  --text-primary: 10 18 42;
+  --text-secondary: 38 50 80;
+  --text-tertiary: 66 80 112;
+  --text-muted: 80 92 122;
+  --accent: 255 178 30;
+  --accent-light: 255 196 84;
+  --accent-ink: 10 18 42;
+  --accent-text: 150 82 0;
+  --mark-h: 0.42em;
+  --mark-color: rgb(var(--accent) / 0.55);
+  --second: 3 105 161;
+  --second-light: 3 105 161;
+  --second-ink: 255 255 255;
   --danger: 185 28 28;
+  --sky-main: 240 244 250;
+  --sky-second: 205 222 250;
+  --sky-mid: 140 180 248;
+  --sky-accent: 120 205 250;
+  --wash-strength: 0.32;
+  --wash-royal: 70 140 250;
   color-scheme: light;
 }
 
@@ -60,13 +93,22 @@ html.light {
     line-height: 1.6;
   }
 
+  html {
+    scrollbar-color: rgb(var(--text-muted) / 0.6) transparent;
+  }
+
   ::selection {
-    background-color: rgb(var(--accent));
-    color: rgb(var(--accent-ink));
+    background-color: rgb(var(--second));
+    color: rgb(var(--second-ink));
+  }
+
+  input,
+  textarea {
+    caret-color: rgb(var(--accent-text));
   }
 
   :focus-visible {
-    outline: 2px solid rgb(var(--accent));
+    outline: 2px solid rgb(var(--accent-text));
     outline-offset: 3px;
   }
 
@@ -91,119 +133,230 @@ html.light {
     }
   }
 
+  /*
+   * The sky behind the hero and the contact section. It fades out toward the page (the foot of the hero, the
+   * top of the contact section), so it melts into the ground instead of ending at an edge. The gradient shows
+   * until the canvas has drawn, and for good where WebGL is missing.
+   */
+  .sky {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent);
+    background: linear-gradient(
+      45deg,
+      rgb(var(--sky-main)) 35%,
+      rgb(var(--sky-second)) 65%,
+      rgb(var(--sky-mid)) 85%,
+      rgb(var(--sky-accent))
+    );
+  }
+
+  /* The closing sky also thins out at its very foot, so the footer below it does not meet a hard line. */
+  .sky[data-rise] {
+    -webkit-mask-image: linear-gradient(to top, transparent, #000 20%, #000 50%, transparent);
+    mask-image: linear-gradient(to top, transparent, #000 20%, #000 50%, transparent);
+    background: linear-gradient(
+      135deg,
+      rgb(var(--sky-main)) 35%,
+      rgb(var(--sky-second)) 65%,
+      rgb(var(--sky-mid)) 85%,
+      rgb(var(--sky-accent))
+    );
+  }
+
+  /*
+   * Two soft pools of colour behind a section, so the palette carries on down the page without a box. Each
+   * ellipse is sized from the section itself and fades out before its edges, so it never shows a seam. The
+   * main pool sits on one side in one blue, a smaller one on the other side in the other blue; both drift
+   * (see the motion block), so the ground is never quite still.
+   */
+  .wash {
+    position: relative;
+    isolation: isolate;
+    /* The pools drift past the sides; clip keeps that from widening the page without trapping the sticky title. */
+    overflow-x: clip;
+  }
+
+  .wash::before,
+  .wash::after {
+    --a: var(--wash-strength);
+    content: "";
+    position: absolute;
+    /* Wider than the section, so a drifting pool never brings its edge on screen. Positions and sizes below are
+       in this wider box: 75% here is 85% of the section, 43% wide is 60% of it. */
+    inset: -12% -20%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse var(--wash-size, 43% 50%) at var(--wash-x, 75%) var(--wash-y, 50%),
+      rgb(var(--wash-color) / var(--a)),
+      rgb(var(--wash-color) / calc(var(--a) * 0.55)) 35%,
+      rgb(var(--wash-color) / calc(var(--a) * 0.18)) 65%,
+      rgb(var(--wash-color) / 0) 100%
+    );
+  }
+
+  .wash::after {
+    --a: calc(var(--wash-strength) * 0.7);
+    --wash-color: var(--wash-alt-color);
+    --wash-x: var(--wash-alt-x, 30%);
+    --wash-y: 30%;
+    --wash-size: 29% 38%;
+  }
+
+  .wash-blue {
+    --wash-color: var(--second);
+    --wash-alt-color: var(--wash-royal);
+  }
+
+  /* A deeper, more saturated blue, so neighbouring sections differ without bringing green over the blue ground. */
+  .wash-royal {
+    --wash-color: var(--wash-royal);
+    --wash-alt-color: var(--second-light);
+  }
+
+  .wash-left {
+    --wash-x: 23%;
+    --wash-alt-x: 73%;
+  }
+
+  /* Motes of light behind the whole page (see Dust). */
+  .dust {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* Fine grain over the sky, so the colour has a surface instead of a screen-flat fill. */
+  .sky::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  .sky canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 700ms ease;
+  }
+
+  .sky canvas[data-ready] {
+    opacity: 1;
+  }
+
+  /* A marker stroke of the accent behind the words that matter most. */
+  .hl {
+    background-image: linear-gradient(var(--mark-color), var(--mark-color));
+    background-repeat: no-repeat;
+    background-size: 100% var(--mark-h);
+    background-position: 0 100%;
+    border-radius: 0.2em;
+    padding-inline: 0.14em;
+    margin-inline: -0.14em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
   .card {
     border: 1px solid rgb(var(--border));
     background-color: rgb(var(--surface));
     border-radius: 1rem;
   }
 
-  /* Letters still being decoded show in the accent, so the name resolves from blue noise into ink. */
+  /* Letters still being decoded stay dim, so the name resolves out of noise into full ink. */
   .decrypt-glyph {
-    color: rgb(var(--accent));
+    color: rgb(var(--text-muted));
   }
 
-  /* Hero backdrop: a faint dot grid everywhere, a brighter patch where the light is. */
-  .spotlight-dots,
-  .spotlight-lit {
-    background-image: radial-gradient(rgb(var(--text-muted) / 0.35) 1px, transparent 1.5px);
-    background-size: 22px 22px;
-    mask-image: linear-gradient(to bottom, black 40%, transparent);
+  /* Section titles (see RiseText): each word is a window the letters rise through, with an accent rule below. */
+  .rise-word {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: clip;
+    /* Room for descenders inside the window, given back so the line height does not change. */
+    padding-bottom: 0.12em;
+    margin-bottom: -0.12em;
   }
 
-  .spotlight-dots {
-    opacity: 0.35;
+  .rise-char {
+    display: inline-block;
   }
 
-  .spotlight-lit {
-    background-image:
-      radial-gradient(rgb(var(--accent)) 1.2px, transparent 1.7px),
-      radial-gradient(circle at var(--mx, 70%) var(--my, 30%), rgb(var(--accent) / 0.1), transparent 70%);
-    background-size:
-      22px 22px,
-      100% 100%;
-    mask-image: radial-gradient(260px circle at var(--mx, 70%) var(--my, 30%), black, transparent 75%);
-    opacity: 0.8;
+  .rise-rule {
+    display: block;
+    width: 2.5rem;
+    height: 2px;
+    margin-top: 0.6rem;
+    border-radius: 1px;
+    background-color: rgb(var(--accent-text));
+    transform-origin: left;
   }
 
-  /* Writeups list: a light that follows the mouse across the rows. */
-  .pointer-glow {
-    position: relative;
-  }
-
-  .pointer-glow::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background: radial-gradient(
-      420px circle at var(--gx, 50%) var(--gy, -200px),
-      rgb(var(--accent) / 0.09),
-      transparent 60%
-    );
-    opacity: 0;
-    transition: opacity 300ms ease;
-  }
-
-  .pointer-glow:hover::before {
-    opacity: 1;
-  }
-
+  /* The hover state is the accent marker drawn under the title. */
   .row-title {
     display: inline-block;
-    transition: transform 350ms var(--ease-out);
+    background-image: linear-gradient(var(--mark-color), var(--mark-color));
+    background-repeat: no-repeat;
+    background-size: 0 var(--mark-h);
+    background-position: 0 100%;
+    transition:
+      transform 350ms var(--ease-out),
+      background-size 200ms ease-out;
+  }
+
+  .group:focus-visible .row-title {
+    background-size: 100% var(--mark-h);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .group:hover .row-title {
       transform: translateX(6px);
+      background-size: 100% var(--mark-h);
+      transition-duration: 350ms, 450ms;
     }
   }
 
-  .caret {
-    display: inline-block;
-    width: 0.55em;
-    height: 1.1em;
-    margin-left: 2px;
-    vertical-align: -0.2em;
-    background: rgb(var(--accent));
-  }
-
-  /* Contact card: a beam of light runs around its border. */
-  .beam::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    padding: 1px;
-    pointer-events: none;
-    background: conic-gradient(
-      from var(--beam-angle),
-      transparent 0deg,
-      transparent 280deg,
-      rgb(var(--accent)) 340deg,
-      transparent 360deg
-    );
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-  }
-
-  /* Contest results: the hovered row comes forward. */
-  .award-event {
+  /* Contest and certification rows: the hovered row steps forward and an accent mark is drawn where it stood. */
+  .nudge-text {
+    position: relative;
     display: inline-block;
     transition:
       transform 300ms var(--ease-out),
       color 200ms ease;
   }
 
+  .nudge-text::before {
+    content: "";
+    position: absolute;
+    left: -1rem;
+    top: 0.72em;
+    width: 0.6rem;
+    height: 2px;
+    border-radius: 1px;
+    background-color: rgb(var(--accent-text));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 300ms var(--ease-out);
+  }
+
   @media (hover: hover) and (pointer: fine) {
-    .award:hover .award-event {
-      transform: translateX(6px);
-      color: rgb(var(--accent-light));
+    .nudge:hover .nudge-text {
+      transform: translateX(1rem);
+    }
+
+    .nudge:hover .nudge-text::before {
+      transform: scaleX(1);
     }
   }
 
@@ -247,15 +400,19 @@ html.light {
   }
 
   .link:hover {
-    color: rgb(var(--accent));
+    color: rgb(var(--accent-text));
     text-decoration-color: currentColor;
+    text-decoration-thickness: 2px;
   }
 }
 
 /*
- * Motion: a short entrance on the hero, a fade as sections scroll in and
- * view transitions between pages. Content never waits on script, and
- * visitors who ask for reduced motion get the static page.
+ * Motion: one entrance, on the hero, a ground that is always slowly moving
+ * (the skies, the drifting colour pools, motes of light), titles that rise or
+ * wipe in as they are reached and then glint now and then,
+ * and motion that answers the visitor (hover, theme switch, page changes).
+ * Content never waits on script, and visitors who ask for reduced motion get
+ * the still page.
  */
 @media (prefers-reduced-motion: no-preference) {
   .enter {
@@ -264,49 +421,43 @@ html.light {
   }
 
   .magnetic {
-    transition: transform 500ms cubic-bezier(0.2, 1.4, 0.4, 1);
+    transition: transform 500ms var(--ease-out);
   }
 
-  .caret {
-    animation: blink 1s steps(1) infinite;
+  /* The colour pools drift slowly and out of step, so the ground keeps moving while the page is read. */
+  .wash::before {
+    animation: drift-a 18s ease-in-out infinite alternate;
   }
 
-  .clock-colon {
-    animation: blink 2s steps(1) infinite;
+  .wash::after {
+    animation: drift-b 14s ease-in-out infinite alternate;
   }
 
-  .beam::after {
-    opacity: 1;
-    animation: spin-beam 6s linear infinite;
-  }
+  /* Where the browser can tie them to scroll, the two pools also slide past each other as the section passes. */
+  @supports (view-timeline-name: --wash) {
+    .wash {
+      view-timeline-name: --wash;
+      view-timeline-axis: block;
+    }
 
-  /* With no cursor to follow, the lit patch wanders across the grid by itself. */
-  .spotlight:not([data-tracking]) .spotlight-lit {
-    animation: wander 14s var(--ease-in-out) infinite alternate;
-  }
+    .wash::before {
+      animation:
+        drift-a 18s ease-in-out infinite alternate,
+        slide-up linear both;
+      animation-timeline: auto, --wash;
+    }
 
-  /* Arrows lean toward where they lead when their link is hovered. */
-  .nudge {
-    transition: transform 250ms var(--ease-out);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .group:hover .nudge {
-      transform: translateX(3px);
+    .wash::after {
+      animation:
+        drift-b 14s ease-in-out infinite alternate,
+        slide-down linear both;
+      animation-timeline: auto, --wash;
     }
   }
 
-  /* List rows: the hover fill sweeps in from the left and leaves quickly. */
-  .row-wipe {
-    clip-path: inset(0 100% 0 0);
-    transition: clip-path 200ms ease-out;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .group:hover > .row-wipe {
-      clip-path: inset(0 0 0 0);
-      transition: clip-path 450ms var(--ease-out);
-    }
+  /* The marker is drawn across the words just after the headline lands. */
+  .hl {
+    animation: mark 900ms var(--ease-out) 600ms both;
   }
 
   /* Folded sections open to their real height instead of snapping. */
@@ -339,83 +490,70 @@ html.light {
     }
   }
 
-  @supports (animation-timeline: view()) {
-    /* Section headings wipe up into place as they arrive. */
-    .wipe-in {
-      animation: wipe-up linear both;
-      animation-timeline: view();
-      animation-range: entry 10% entry 70%;
+  /* Section titles: letters lift out of their words from soft focus, one after another, then the rule is drawn. */
+  .rise[data-armed] .rise-char {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(105%);
+  }
+
+  .rise[data-armed] .rise-rule {
+    transform: scaleX(0);
+  }
+
+  .rise[data-in] .rise-char {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition:
+      transform 1100ms var(--ease-out),
+      opacity 700ms ease,
+      filter 900ms ease;
+    transition-delay: calc(var(--i, 0) * 35ms);
+  }
+
+  .rise[data-in] .rise-rule {
+    transform: scaleX(1);
+    transition: transform 900ms var(--ease-out);
+    transition-delay: calc(var(--i, 0) * 35ms + 250ms);
+  }
+
+  /* Once a title has risen, a glint of the accent runs through its letters every few seconds, each letter lifting a
+     hair as it passes. It uses colour and translate, so it never fights the rise, which uses transform. */
+  .rise[data-in] .rise-char {
+    animation: glint 7s ease-in-out infinite;
+    animation-delay: calc(1.8s + var(--i, 0) * 60ms);
+  }
+
+  /* The rule under a title grows as its section is read, so it doubles as a quiet reading gauge. */
+  @supports (view-timeline-name: --chapter) {
+    .chapter {
+      view-timeline-name: --chapter;
+      view-timeline-axis: block;
     }
 
-    /* About: the bio brightens word by word as it is scrolled up the screen. */
+    .rise-rule {
+      animation: gauge linear both;
+      animation-timeline: --chapter;
+      animation-range: cover 20% cover 80%;
+    }
+  }
+
+  /* Entry and project titles wipe in from the left as they come up the screen. */
+  @supports (animation-timeline: view()) {
+    .wipe {
+      animation: wipe linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 30%;
+    }
+  }
+
+  /* About: the bio brightens word by word as it is scrolled up the screen, so it is read in step with the scroll. */
+  @supports (animation-timeline: view()) {
     .lit-word {
       animation: lit linear both;
       animation-timeline: view();
       animation-range: cover 10% cover 35%;
-    }
-
-    /* Experience: the role in the middle of the screen is in focus, the others recede. */
-    .focus-item {
-      animation: focus linear both;
-      animation-timeline: view();
-      animation-range: cover 0% cover 100%;
-    }
-
-    .row-in {
-      animation: rise linear both;
-      animation-timeline: view();
-      animation-range: entry 10% entry 80%;
-    }
-
-    /* Projects: the command types itself, then its output appears line by line.
-       Every line follows the terminal's own timeline so they stay in sequence. */
-    .terminal {
-      view-timeline: --terminal;
-    }
-
-    .terminal .type-line {
-      display: inline-block;
-      animation: type steps(14) both;
-      animation-timeline: --terminal;
-      animation-range: entry 50% cover 25%;
-    }
-
-    .terminal .type-out {
-      animation: rise linear both;
-      animation-timeline: --terminal;
-      animation-range: cover 25% cover 30%;
-    }
-
-    .terminal .type-out:nth-child(3) {
-      animation-range: cover 29% cover 34%;
-    }
-
-    .terminal .type-out:nth-child(4) {
-      animation-range: cover 33% cover 38%;
-    }
-
-    .dot-pop {
-      animation: pop linear both;
-      animation-timeline: view();
-      animation-range: entry 30% entry 80%;
-    }
-  }
-
-  @supports (animation-timeline: view()) {
-    .reveal {
-      animation: rise linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 40%;
-    }
-  }
-
-  /* The experience rail draws itself downward as each role scrolls into view. */
-  @supports (animation-timeline: view()) {
-    .rail {
-      transform-origin: top;
-      animation: draw linear both;
-      animation-timeline: view();
-      animation-range: entry 10% cover 45%;
     }
   }
 
@@ -429,17 +567,6 @@ html.light {
   .menu-item {
     animation: rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
     animation-delay: calc(var(--i, 0) * 45ms);
-  }
-
-  /* Underlines grow from the left instead of blinking on. */
-  .grow-line {
-    background: linear-gradient(currentColor, currentColor) no-repeat left bottom / 0% 1px;
-    transition: background-size 300ms cubic-bezier(0.3, 0.9, 0.25, 1);
-  }
-
-  .grow-line:hover,
-  .group:hover .grow-line {
-    background-size: 100% 1px;
   }
 
   /*
@@ -507,79 +634,92 @@ html.light {
   }
 }
 
+@keyframes drift-a {
+  from {
+    opacity: 0.7;
+    transform: translate3d(-4%, -3%, 0) scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(5%, 4%, 0) scale(1.14);
+  }
+}
+
+@keyframes drift-b {
+  from {
+    opacity: 1;
+    transform: translate3d(5%, 4%, 0) scale(1.1);
+  }
+  to {
+    opacity: 0.6;
+    transform: translate3d(-7%, -2%, 0) scale(0.92);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    translate: 0 12vh;
+  }
+  to {
+    translate: 0 -12vh;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    translate: 0 -10vh;
+  }
+  to {
+    translate: 0 10vh;
+  }
+}
+
+@keyframes wipe {
+  from {
+    clip-path: inset(-0.2em 100% -0.3em 0);
+    translate: -0.75rem 0;
+  }
+  to {
+    /* The overshoot keeps ascenders and descenders from being shaved off. */
+    clip-path: inset(-0.2em -0.2em -0.3em -0.2em);
+    translate: 0 0;
+  }
+}
+
+@keyframes glint {
+  0%,
+  10% {
+    color: rgb(var(--text-primary));
+    translate: 0 0;
+  }
+  5% {
+    color: rgb(var(--accent-text));
+    translate: 0 -0.06em;
+  }
+}
+
+@keyframes gauge {
+  from {
+    scale: 1 1;
+  }
+  to {
+    scale: 3 1;
+  }
+}
+
+@keyframes mark {
+  from {
+    background-size: 0 var(--mark-h);
+  }
+}
+
 @keyframes lit {
   from {
-    color: rgb(var(--text-muted) / 0.6);
+    color: rgb(var(--text-primary) / 0.6);
   }
   to {
     color: rgb(var(--text-primary));
   }
-}
-
-@keyframes focus {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  25%,
-  85% {
-    opacity: 1;
-  }
-}
-
-@keyframes type {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
-}
-
-@keyframes spin-beam {
-  to {
-    --beam-angle: 360deg;
-  }
-}
-
-@property --beam-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
-@keyframes wander {
-  0% {
-    --mx: 15%;
-    --my: 20%;
-  }
-  50% {
-    --mx: 85%;
-    --my: 45%;
-  }
-  100% {
-    --mx: 40%;
-    --my: 75%;
-  }
-}
-
-/* Registered so the wandering spotlight can interpolate its position. */
-@property --mx {
-  syntax: "<length-percentage>";
-  inherits: true;
-  initial-value: 70%;
-}
-
-@property --my {
-  syntax: "<length-percentage>";
-  inherits: true;
-  initial-value: 30%;
 }
 
 @keyframes grow-x {
@@ -588,33 +728,6 @@ html.light {
   }
   to {
     transform: scaleX(1);
-  }
-}
-
-@keyframes wipe-up {
-  from {
-    clip-path: inset(0 0 100% 0);
-    transform: translateY(0.4em);
-  }
-  to {
-    clip-path: inset(0 0 -0.2em 0);
-    transform: none;
-  }
-}
-
-@keyframes pop {
-  from {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-}
-
-@keyframes draw {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
   }
 }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ViewTransitions } from "next-view-transitions";
 import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
+import { Dust } from "@/components/motion/Dust";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -35,7 +36,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <ViewTransitions>
       <html lang="en" id="top" suppressHydrationWarning>
-        <body className={`${sans.variable} ${mono.variable} bg-bg font-body text-text-primary antialiased`}>
+        <body className={`${sans.variable} ${mono.variable} font-body text-text-primary antialiased`}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
             <a
               href="#content"
@@ -43,6 +44,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             >
               Skip to content
             </a>
+            <Dust />
             <SiteHeader name={profile.name} />
             <main id="content" className="page min-h-[70svh]">
               {children}

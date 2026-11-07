@@ -8,17 +8,14 @@ export interface Award {
   event: string;
 }
 
+/** Every contest result, podiums first, then finals from the most recent. */
 export const awards: Award[] = [
   { place: "1st place", event: "Competitive Programming, Veternity" },
+  { place: "2nd place", event: "Competitive Programming, Pekan-IT" },
   { place: "Finalist", event: "ICPC Asia Jakarta Regional 2025" },
   { place: "Finalist", event: "Programming, GEMASTIK XVIII 2025" },
   { place: "Finalist", event: "Competitive Programming, COMPFEST 2025" },
   { place: "Finalist", event: "Competitive Programming, FIND IT! 2025" },
-];
-
-/** Results from the LinkedIn profile that are not featured above; they still count toward the totals. */
-export const otherResults: Award[] = [
-  { place: "2nd place", event: "Competitive Programming, Pekan-IT" },
   { place: "Finalist", event: "Competitive Programming, Schematics 2024" },
 ];
 
@@ -29,8 +26,10 @@ export const teaching = {
 
 export const certifications = [
   "SOC Level 1 - TryHackMe",
+  "Jr Penetration Tester (Legacy) - TryHackMe",
   "Security Engineer - TryHackMe",
   "DevSecOps - TryHackMe",
+  "Advent of Cyber 2025 - TryHackMe",
   "CCNA: Enterprise Networking, Security, and Automation",
   "CCNA: Switching, Routing, and Wireless Essentials",
 ];

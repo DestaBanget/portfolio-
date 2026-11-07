@@ -9,13 +9,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconPosition?: "left" | "right";
 }
 
-/** One shape for every button: rounded, flat fill, no shadow. */
+/**
+ * One shape for every button: fully round. The primary button is solid mango, the accent, because it is the one
+ * thing on the page that should collide with the blue.
+ */
 export const buttonBase =
-  "inline-flex items-center justify-center rounded-lg font-medium transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-full font-medium transition-[background-color,border-color,color,transform,filter] duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60";
 
 export const buttonVariants: Record<ButtonVariant, string> = {
   primary: "bg-accent text-accent-ink hover:bg-accent-light",
-  outline: "border border-border bg-surface text-text-primary hover:border-text-muted hover:bg-surface-raised",
+  outline: "border border-text-muted text-text-primary hover:border-text-primary hover:bg-text-primary/10",
   ghost: "text-text-secondary hover:bg-surface-raised hover:text-text-primary",
   danger: "text-danger hover:bg-danger/10",
 };

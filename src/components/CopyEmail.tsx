@@ -18,8 +18,8 @@ export function CopyEmail({ email }: { email: string }) {
   };
 
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-border bg-bg py-1.5 pl-4 pr-1.5">
-      <a href={`mailto:${email}`} className="min-w-0 flex-1 truncate font-mono text-sm hover:text-accent">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <a href={`mailto:${email}`} className="min-w-0 truncate text-lg font-medium underline-offset-4 hover:underline">
         {email}
       </a>
       <button
@@ -33,7 +33,7 @@ export function CopyEmail({ email }: { email: string }) {
             <Copy /> Copy
           </span>
           <span className="swap-b inline-flex items-center gap-1.5">
-            <Check className="text-accent" /> Copied
+            <Check /> Copied
           </span>
         </span>
         <span aria-live="polite" className="sr-only">

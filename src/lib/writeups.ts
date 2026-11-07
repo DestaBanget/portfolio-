@@ -45,7 +45,6 @@ interface RoomRow {
   id: string;
   section_id: string;
   title: string | null;
-  content: string | null;
   difficulty: Difficulty | null;
   is_public: boolean;
 }
@@ -66,19 +65,22 @@ function roomLabel(title: string, sectionTitle: string) {
 export async function getWriteupPaths(options: { includePrivate?: boolean; client?: SupabaseClient } = {}): Promise<Path[]> {
   const db = options.client ?? supabase;
 
-  const [paths, sections, rooms] = await Promise.all([
+  // The list only needs to know a note exists. Selecting the notes themselves made this route take seconds.
+  const [paths, sections, rooms, written] = await Promise.all([
     db.from("wu_paths").select("id,title,platform").order("order_index", { ascending: true }),
     db.from("wu_sections").select("id,path_id,title").order("order_index", { ascending: true }),
     db
       .from("wu_rooms")
-      .select("id,section_id,title,content,difficulty,is_public")
+      .select("id,section_id,title,difficulty,is_public")
       .order("order_index", { ascending: true }),
+    db.from("wu_rooms").select("id").not("content", "is", null).neq("content", ""),
   ]);
 
-  const failed = paths.error ?? sections.error ?? rooms.error;
+  const failed = paths.error ?? sections.error ?? rooms.error ?? written.error;
   if (failed) throw new Error(`writeups: ${failed.message}`);
 
   const roomRows = ((rooms.data ?? []) as RoomRow[]).filter((room) => options.includePrivate || room.is_public);
+  const withNote = new Set((written.data ?? []).map((room) => room.id as string));
 
   return ((paths.data ?? []) as PathRow[]).map((path) => {
     const pathSections = ((sections.data ?? []) as SectionRow[])
@@ -90,7 +92,7 @@ export async function getWriteupPaths(options: { includePrivate?: boolean; clien
             id: room.id,
             title: roomLabel(room.title ?? "", section.title),
             difficulty: room.difficulty,
-            readable: room.is_public && Boolean(room.content),
+            readable: room.is_public && withNote.has(room.id),
           }));
 
         return { id: section.id, title: section.title, rooms: sectionRooms };

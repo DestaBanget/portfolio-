@@ -13,7 +13,7 @@ export function PageHeader({
   return (
     <header className="pb-10 pt-12 md:pb-14 md:pt-20">
       <h1
-        className={`${transitionName ? "" : "enter "}w-fit text-4xl font-semibold tracking-tight md:text-5xl`}
+        className={`${transitionName ? "" : "enter "}w-fit text-3xl font-semibold tracking-tight md:text-4xl`}
         style={transitionName ? { viewTransitionName: transitionName } : undefined}
       >
         {title}

@@ -2,14 +2,13 @@ import type { CSSProperties, ReactNode } from "react";
 import { Link } from "next-view-transitions";
 import { ContactForm } from "@/components/ContactForm";
 import { CopyEmail } from "@/components/CopyEmail";
-import { ArrowRight, ArrowUpRight, Download } from "@/components/Icons";
-import { CountUp } from "@/components/motion/CountUp";
+import { Download } from "@/components/Icons";
 import { DecryptText } from "@/components/motion/DecryptText";
+import { RiseText } from "@/components/motion/RiseText";
 import { LocalTime } from "@/components/motion/LocalTime";
 import { Magnetic } from "@/components/motion/Magnetic";
-import { PointerGlow } from "@/components/motion/PointerGlow";
 import { ScrollLitText } from "@/components/motion/ScrollLitText";
-import { Spotlight } from "@/components/motion/Spotlight";
+import { Sky } from "@/components/motion/Sky";
 import { SocialLinks } from "@/components/SiteFooter";
 import { buttonBase, buttonSizes, buttonVariants } from "@/components/ui/Button";
 import {
@@ -18,51 +17,70 @@ import {
   education,
   languages,
   location,
-  otherResults,
   teaching,
   topSkills,
 } from "@/data/highlights";
 import { getExperience, type Experience } from "@/lib/experience";
-import { displayUrl, getProfile } from "@/lib/profile";
+import { getProfile } from "@/lib/profile";
 import { getProjects, projectStatusLabel, projectTypeLabel, type Project } from "@/lib/projects";
-import { getWriteupPaths, platformName, type Path } from "@/lib/writeups";
+import { getWriteupPaths, type Path } from "@/lib/writeups";
 
 const delay = (i: number) => ({ "--i": i }) as CSSProperties;
 
+const primaryButton = `${buttonBase} ${buttonVariants.primary} ${buttonSizes.lg}`;
+
+// Full class names, so Tailwind finds them in the source and keeps them in the build.
+const washes = {
+  blue: "wash wash-blue",
+  royal: "wash wash-royal",
+  "blue-left": "wash wash-blue wash-left",
+  "royal-left": "wash wash-royal wash-left",
+} as const;
+
 /**
- * Every home section shares one frame: the heading sits in a narrow column on the
- * left and stays in view while its content scrolls past on the right.
+ * Every section after the hero shares one shape: the title in a narrow column on the left, the content on the
+ * right. Space, not lines, separates them, and a soft wash of light or royal blue behind each one carries the palette
+ * down the page.
  */
 function Section({
   id,
   title,
   intro,
-  action,
   transitionName,
+  tone,
+  backdrop,
   children,
 }: {
   id: string;
   title: string;
   intro?: ReactNode;
-  action?: ReactNode;
-  /** Lets the heading travel to the matching page heading during a view transition. */
   transitionName?: string;
+  /** Which colour washes behind the section, and from which side. */
+  tone?: keyof typeof washes;
+  /** Something drawn behind the whole section instead of a wash, such as a sky. */
+  backdrop?: ReactNode;
   children: ReactNode;
 }) {
+  const wash = tone ? washes[tone] : "";
+
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="container-page">
-      <div className="grid gap-8 border-t border-border/70 py-16 md:py-24 lg:grid-cols-12 lg:gap-12">
-        <div className="reveal lg:col-span-3">
+    <section
+      id={id}
+      aria-labelledby={`${id}-title`}
+      className={`chapter ${wash} ${backdrop ? "relative isolate" : ""}`}
+    >
+      {backdrop}
+      <div className="container-page grid gap-8 py-14 md:py-20 lg:grid-cols-12 lg:gap-12">
+        <div className="lg:col-span-3">
           <div className="lg:sticky lg:top-24">
             <h2
               id={`${id}-title`}
-              className="wipe-in w-fit text-2xl font-semibold tracking-tight md:text-3xl"
+              className="w-fit text-2xl font-semibold tracking-tight md:text-3xl"
               style={transitionName ? { viewTransitionName: transitionName } : undefined}
             >
-              {title}
+              <RiseText text={title} />
             </h2>
-            {intro ? <p className="mt-3 max-w-sm text-text-tertiary">{intro}</p> : null}
-            {action ? <div className="mt-5">{action}</div> : null}
+            {intro}
           </div>
         </div>
         <div className="lg:col-span-9">{children}</div>
@@ -71,147 +89,76 @@ function Section({
   );
 }
 
-function Chip({ children }: { children: ReactNode }) {
-  return (
-    <li className="rounded-md border border-border bg-surface-raised/60 px-2.5 py-1 text-sm text-text-secondary">
-      {children}
-    </li>
-  );
-}
-
-/** The hero's figure: contest results and certifications, the proof behind the headline. */
-function TrackRecord() {
-  return (
-    <aside
-      aria-labelledby="track-record"
-      className="enter border-t border-border pt-6 lg:col-span-5 lg:col-start-8"
-      style={delay(4)}
-    >
-      <h2 id="track-record" className="text-sm text-text-tertiary">
-        Track record
-      </h2>
-
-      <ul className="mt-5 space-y-3.5">
-        {awards.map((award, i) => (
-          <li
-            key={award.event}
-            className="award enter grid grid-cols-[6rem_1fr] items-baseline gap-3"
-            style={delay(5 + i)}
-          >
-            <span
-              className={`font-mono text-xs uppercase tracking-wide ${award.place === "Finalist" ? "text-text-tertiary" : "text-accent"}`}
-            >
-              {award.place}
-            </span>
-            <span className="award-event">{award.event}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-7">
-        <h3 className="text-sm text-text-tertiary">Certifications</h3>
-        <ul className="mt-3 space-y-1.5 text-text-secondary">
-          {certifications.map((name) => (
-            <li key={name}>{name}</li>
-          ))}
-        </ul>
-      </div>
-    </aside>
-  );
+function Figure({ children }: { children: ReactNode }) {
+  return <span className="font-semibold text-accent-text">{children}</span>;
 }
 
 function ExperienceItem({ item }: { item: Experience }) {
   return (
-    <li className="focus-item relative pb-10 pl-8 last:pb-0">
-      <span aria-hidden className="rail absolute bottom-0 left-[5px] top-2 w-px bg-border" />
-      <span
-        aria-hidden
-        className={`dot-pop absolute left-0 top-1.5 size-[11px] rounded-full border-2 border-bg ${item.current ? "bg-accent" : "bg-text-muted"}`}
-      />
-
-      <h3 className="text-lg font-semibold leading-snug">{item.role}</h3>
-      <p className="mt-0.5 text-text-secondary">{[item.company, item.type].filter(Boolean).join(" · ")}</p>
-      <p className="mt-1 font-mono text-sm text-text-tertiary">
-        {item.period} · {item.duration}
-        {item.location ? ` · ${item.location}` : null}
+    <li className="gap-8 md:grid md:grid-cols-[9.5rem_1fr]">
+      <p className="text-sm tabular-nums text-text-tertiary">
+        {item.period}
+        <br />
+        {item.duration}
+        {item.location ? `, ${item.location}` : null}
       </p>
-      {item.description
-        ? item.description
-            .split(/\n+/)
-            .filter(Boolean)
-            .map((paragraph) => (
-              <p key={paragraph} className="mt-3 text-text-secondary">
-                {paragraph}
-              </p>
-            ))
-        : null}
-      {item.skills.length > 0 ? (
-        <ul className="mt-4 flex flex-wrap gap-2">
-          {item.skills.map((skill) => (
-            <Chip key={skill}>{skill}</Chip>
-          ))}
-        </ul>
+      <div className="mt-2 md:mt-0">
+        <h3 className="wipe text-xl font-semibold leading-snug tracking-tight">{item.role}</h3>
+        <p className="mt-1 font-medium text-accent-text">
+          {item.company}
+          {item.type ? <span className="font-normal text-text-tertiary">, {item.type.toLowerCase()}</span> : null}
+        </p>
+        {item.description
+          ? item.description
+              .split(/\n+/)
+              .filter(Boolean)
+              .map((paragraph) => (
+                <p key={paragraph} className="mt-3 max-w-2xl text-text-secondary">
+                  {paragraph}
+                </p>
+              ))
+          : null}
+        {item.skills.length > 0 ? <p className="mt-4 text-sm text-text-tertiary">{item.skills.join(", ")}</p> : null}
+      </div>
+    </li>
+  );
+}
+
+function ProjectEntry({ project }: { project: Project }) {
+  const kind = projectTypeLabel[project.type ?? ""];
+  const status = projectStatusLabel[project.status ?? ""];
+
+  return (
+    <li>
+      <h3 className="wipe text-2xl font-semibold tracking-tight">{project.title}</h3>
+      {kind || status ? (
+        <p className="mt-1 font-medium text-accent-text">
+          {kind}
+          {kind && status ? ", " : null}
+          {status ? <span className="font-normal text-text-tertiary">{kind ? status.toLowerCase() : status}</span> : null}
+        </p>
+      ) : null}
+      {project.description ? <p className="mt-3 max-w-2xl text-text-secondary">{project.description}</p> : null}
+      {project.url ? (
+        <a href={project.url} target="_blank" rel="noreferrer" className={`${primaryButton} mt-6`}>
+          {project.url.includes("github.com") ? "View on GitHub" : "Open project"}
+        </a>
       ) : null}
     </li>
   );
 }
 
-function ProjectCard({ project }: { project: Project }) {
-  const meta = [projectTypeLabel[project.type ?? ""], projectStatusLabel[project.status ?? ""]].filter(Boolean);
-  const body = (
-    <>
-      <div className="flex items-start justify-between gap-4">
-        <h3 className="text-xl font-semibold tracking-tight">{project.title}</h3>
-        {project.url ? (
-          <ArrowUpRight className="mt-1 shrink-0 text-text-tertiary transition-colors group-hover:text-accent" />
-        ) : null}
-      </div>
-      {project.description ? <p className="mt-3 text-text-secondary">{project.description}</p> : null}
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-6 text-sm text-text-tertiary">
-        <span>{meta.join(" · ")}</span>
-        {project.url ? <span className="font-mono text-xs">{displayUrl(project.url)}</span> : null}
-      </div>
-    </>
-  );
-
+function PathRow({ path }: { path: Path }) {
   return (
-    <li className="reveal">
-      {project.url ? (
-        <a
-          href={project.url}
-          target="_blank"
-          rel="noreferrer"
-          className="card group flex h-full flex-col p-6 transition-colors hover:border-text-muted"
-        >
-          {body}
-        </a>
-      ) : (
-        <div className="card flex h-full flex-col p-6">{body}</div>
-      )}
-    </li>
-  );
-}
-
-function PathRow({ path, index }: { path: Path; index: number }) {
-  return (
-    <li className="row-in">
+    <li>
       <Link
         href={`/writeups#${path.id}`}
-        className="group relative isolate flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-5 py-5"
+        className="group flex flex-wrap items-baseline justify-between gap-x-8 gap-y-1 py-3"
       >
-        <span aria-hidden className="row-wipe absolute inset-0 -z-10 bg-surface-raised/70" />
-        <span className="flex items-baseline gap-4">
-          <span aria-hidden className="font-mono text-xs text-text-muted transition-colors group-hover:text-accent">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-          <span className="row-title text-lg font-medium">{path.title}</span>
-        </span>
-        <span className="flex items-center gap-4 text-sm text-text-tertiary">
-          <span>
-            {platformName[path.platform]} · {path.rooms} rooms
-            {path.writeups > 0 ? ` · ${path.writeups} ${path.writeups === 1 ? "writeup" : "writeups"}` : null}
-          </span>
-          <ArrowRight className="transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+        <span className="row-title text-lg font-medium tracking-tight md:text-xl">{path.title}</span>
+        <span className="text-sm tabular-nums text-text-tertiary">
+          {path.rooms} rooms
+          {path.writeups > 0 ? `, ${path.writeups} ${path.writeups === 1 ? "writeup" : "writeups"}` : null}
         </span>
       </Link>
     </li>
@@ -227,55 +174,43 @@ export default async function Home() {
   ]);
 
   const current = experience.find((item) => item.current);
+  // The legal name in brackets ("Defenxor (PT ...)") is too long for the opening sentence.
+  const employer = current?.company.replace(/\s*\(.*\)\s*$/, "");
   const skills = Array.from(new Set([...topSkills, ...experience.flatMap((item) => item.skills)]));
 
-  // The headline numbers: contests, security training, people taught.
-  const stats = [
-    { label: "Contest finals and podiums", value: awards.length + otherResults.length },
-    { label: "TryHackMe learning paths", value: paths.length },
-    { label: "Students mentored in the lab", value: teaching.labStudents },
-  ];
-
   const facts = [
-    { label: "Studying", value: `${education.degree}, ${education.school} (${education.years})` },
+    { label: "Studying", value: `${education.degree}, ${education.school}` },
     { label: "Based in", value: location },
     { label: "Languages", value: languages },
-    paths.length > 0 ? { label: "TryHackMe", value: paths.map((path) => path.title).join(", ") } : null,
-  ].filter((fact) => fact !== null);
+  ];
 
   return (
     <>
-      <div className="relative isolate overflow-hidden">
-        <Spotlight />
-        <section className="container-page grid gap-14 pb-16 pt-14 md:pb-24 md:pt-24 lg:grid-cols-12 lg:gap-12">
-          <div className="lg:col-span-7 lg:self-center">
-            {current ? (
-              <p className="enter text-sm text-text-tertiary">
-                Now{" "}
-                <span className="text-text-secondary">
-                  {/* The legal name in brackets ("Defenxor (PT ...)") is too long for a status line. */}
-                  {current.role}, {current.company.replace(/\s*\(.*\)\s*$/, "")}
-                </span>
-              </p>
-            ) : null}
+      {/*
+        The one bold thing on the page: a live sky behind the name. It runs under the header and melts into the
+        ground at its foot, so it has no edge.
+      */}
+      <section aria-label="Introduction" className="relative isolate -mt-16 pt-16">
+        <Sky />
+        <div className="container-page flex min-h-[calc(84svh-4rem)] flex-col justify-end pb-12 pt-16 md:pb-16">
+          <h1
+            className="enter text-[clamp(2rem,4.6vw,3.5rem)] font-semibold leading-[1.1] tracking-[-0.02em]"
+            style={delay(1)}
+          >
+            <DecryptText text={profile.name} />
+          </h1>
 
-            <h1
-              className="enter mt-5 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.25rem]"
-              style={delay(1)}
-            >
-              <DecryptText text={profile.name} />
-            </h1>
-
-            <p className="enter mt-6 max-w-xl text-lg text-text-secondary" style={delay(2)}>
-              Security analyst intern and Computer Science student at Universitas Brawijaya. I compete in programming
-              contests, set and judge problems for them, and teach algorithms.
+          <div className="mt-5 grid items-end gap-7 lg:grid-cols-12 lg:gap-12">
+            <p className="enter text-lg leading-relaxed text-text-secondary lg:col-span-7" style={delay(2)}>
+              <span className="hl">Security analyst intern{employer ? ` at ${employer}` : null}</span> and Computer
+              Science student at Universitas Brawijaya. I compete in programming contests, set and judge problems for
+              them, and teach algorithms.
             </p>
 
-            <div className="enter mt-9 flex flex-wrap items-center gap-3" style={delay(3)}>
+            <div className="enter flex flex-wrap items-center gap-3 lg:col-span-5 lg:justify-end" style={delay(3)}>
               <Magnetic>
-                <a href="#contact" className={`group ${buttonBase} ${buttonVariants.primary} ${buttonSizes.lg}`}>
+                <a href="#contact" className={primaryButton}>
                   Get in touch
-                  <ArrowRight className="nudge" />
                 </a>
               </Magnetic>
               {profile.cvUrl ? (
@@ -290,76 +225,84 @@ export default async function Home() {
               ) : null}
               <SocialLinks profile={profile} className="ml-1" />
             </div>
-
-            <dl className="enter mt-12 grid max-w-lg grid-cols-3 gap-4 border-t border-border pt-6" style={delay(4)}>
-              {stats.map((stat) => (
-                <div key={stat.label}>
-                  <dt className="sr-only">{stat.label}</dt>
-                  <dd>
-                    <span className="block text-3xl font-semibold tracking-tight md:text-4xl">
-                      <CountUp value={stat.value} />
-                    </span>
-                    <span aria-hidden className="mt-1 block text-sm leading-snug text-text-tertiary">
-                      {stat.label}
-                    </span>
-                  </dd>
-                </div>
-              ))}
-            </dl>
           </div>
+        </div>
+      </section>
 
-          <TrackRecord />
-        </section>
-      </div>
+      <Section id="record" title="Track record" tone="royal-left">
+        <p className="max-w-3xl text-xl leading-snug md:text-2xl md:leading-snug">
+          <Figure>{awards.length}</Figure> contest finals and podiums,{" "}
+          <Figure>{paths.length}</Figure> TryHackMe learning paths, and <Figure>{teaching.labStudents}</Figure>{" "}
+          students mentored in the lab.
+        </p>
 
-      <Section id="about" title="About">
-        <div className="reveal">
-          <ScrollLitText
-            text={profile.bio}
-            className="max-w-3xl text-xl font-medium leading-relaxed tracking-tight md:text-2xl md:leading-relaxed"
-          />
-
-          <div className="mt-12 grid gap-10 md:grid-cols-2 md:gap-12">
-            <dl className="divide-y divide-border border-y border-border self-start">
-              {facts.map((fact) => (
-                <div key={fact.label} className="grid grid-cols-[6.5rem_1fr] gap-4 py-3">
-                  <dt className="text-sm text-text-tertiary">{fact.label}</dt>
-                  <dd>{fact.value}</dd>
-                </div>
+        <div className="mt-12 grid gap-12 md:grid-cols-12 md:gap-10">
+          <div className="md:col-span-7">
+            <h3 className="font-semibold">Contests</h3>
+            <ul className="mt-4 space-y-3">
+              {awards.map((award) => (
+                <li key={award.event} className="nudge grid grid-cols-[5.5rem_1fr] items-baseline gap-3">
+                  <span
+                    className={`text-sm ${award.place === "Finalist" ? "text-text-tertiary" : "font-semibold text-accent-text"}`}
+                  >
+                    {award.place}
+                  </span>
+                  <span className="nudge-text">{award.event}</span>
+                </li>
               ))}
-            </dl>
-
-            <div className="space-y-8">
-              {profile.focus.length > 0 ? (
-                <div>
-                  <h3 className="font-medium">Working on now</h3>
-                  <ul className="mt-3 space-y-2 text-text-secondary">
-                    {profile.focus.map((item) => (
-                      <li key={item} className="flex gap-3">
-                        <span aria-hidden className="mt-[0.6em] size-1.5 shrink-0 rounded-full bg-accent" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              <div>
-                <h3 className="font-medium">Skills</h3>
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {skills.map((skill) => (
-                    <Chip key={skill}>{skill}</Chip>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            </ul>
+          </div>
+          <div className="md:col-span-5">
+            <h3 className="font-semibold">Certifications</h3>
+            <ul className="mt-4 space-y-3">
+              {certifications.map((name) => (
+                <li key={name} className="nudge">
+                  <span className="nudge-text">{name}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </Section>
 
-      <Section id="experience" title="Experience" intro="Work, teaching and the contests I help run.">
+      <Section id="about" title="About" tone="blue">
+        <ScrollLitText text={profile.bio} className="max-w-3xl text-lg leading-relaxed md:text-xl md:leading-relaxed" />
+
+        <dl className="mt-12 grid gap-x-10 gap-y-6 md:grid-cols-3">
+          {facts.map((fact) => (
+            <div key={fact.label}>
+              <dt className="text-sm text-text-tertiary">{fact.label}</dt>
+              <dd className="mt-1">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="mt-10 grid gap-10 md:grid-cols-12">
+          {profile.focus.length > 0 ? (
+            <div className="md:col-span-5">
+              <h3 className="font-semibold">Working on now</h3>
+              <ul className="mt-2 space-y-1 text-text-secondary">
+                {profile.focus.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <div className={profile.focus.length > 0 ? "md:col-span-7" : "md:col-span-12"}>
+            <h3 className="font-semibold">Skills</h3>
+            <p className="mt-2 text-text-secondary">{skills.join(", ")}</p>
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        id="experience"
+        title="Experience"
+        tone="royal-left"
+        intro={<p className="mt-3 max-w-xs text-text-secondary">Work, teaching and the contests I help run.</p>}
+      >
         {experience.length > 0 ? (
-          <ol className="max-w-3xl">
+          <ol className="space-y-14">
             {experience.map((item) => (
               <ExperienceItem key={item.id} item={item} />
             ))}
@@ -369,34 +312,26 @@ export default async function Home() {
         )}
       </Section>
 
-      <Section id="projects" title="Projects" intro="Things I have built or am building, outside the writeups.">
+      <Section
+        id="projects"
+        title="Projects"
+        tone="blue"
+        intro={<p className="mt-3 max-w-xs text-text-secondary">Things I have built or am building.</p>}
+      >
         {projects.length > 0 ? (
-          <ul className="grid gap-4 md:grid-cols-2">
+          <ul className="space-y-14">
             {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectEntry key={project.id} project={project} />
             ))}
           </ul>
         ) : (
-          // A shell session that types itself out as it scrolls into view.
-          <div className="terminal card overflow-clip font-mono text-sm leading-relaxed">
-            <p className="border-b border-border px-5 py-3 text-xs text-text-tertiary">ferrel@portfolio: ~/projects</p>
-            <div className="space-y-2 p-5 md:p-6">
-              <p>
-                <span className="text-accent">$</span> <span className="type-line">ls --public .</span>
-                <span aria-hidden className="caret" />
-              </p>
-              <p className="type-out text-text-tertiary">total 0</p>
-              <p className="type-out text-text-secondary">
-                Nothing public yet. The writeups show the work in the meantime.
-              </p>
-              <p className="type-out pt-2">
-                <Link href="/writeups" className="group inline-flex items-center gap-1.5 text-accent">
-                  <span className="grow-line">cd ../writeups</span>
-                  <ArrowRight className="nudge" />
-                </Link>
-              </p>
-            </div>
-          </div>
+          <p className="text-lg">
+            Nothing public yet. The{" "}
+            <Link href="/writeups" className="link">
+              writeups
+            </Link>{" "}
+            show the work in the meantime.
+          </p>
         )}
       </Section>
 
@@ -404,38 +339,39 @@ export default async function Home() {
         <Section
           id="writeups"
           title="Writeups"
+          tone="royal"
           transitionName="writeups-title"
-          intro="Notes from the TryHackMe learning paths I have finished."
-          action={
-            <Link
-              href="/writeups"
-              className="group inline-flex items-center gap-1.5 text-sm font-medium hover:text-accent"
-            >
-              <span className="grow-line">All writeups</span>
-              <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
-            </Link>
+          intro={
+            <>
+              <p className="mt-3 max-w-xs text-text-secondary">Notes from the TryHackMe paths I have finished.</p>
+              <Link href="/writeups" className={`${primaryButton} mt-6`}>
+                Read the writeups
+              </Link>
+            </>
           }
         >
-          <PointerGlow className="card reveal overflow-clip">
-            <ul className="divide-y divide-border">
-              {paths.map((path, i) => (
-                <PathRow key={path.id} path={path} index={i} />
-              ))}
-            </ul>
-          </PointerGlow>
+          <ul className="-mt-3">
+            {paths.map((path) => (
+              <PathRow key={path.id} path={path} />
+            ))}
+          </ul>
         </Section>
       ) : null}
 
-      <Section id="contact" title="Get in touch">
-        <div className="card beam reveal relative grid gap-10 p-6 md:p-10 xl:grid-cols-2 xl:gap-14">
-          <div>
-            <p className="text-lg text-text-secondary">
-              {profile.contactNote ?? "Write to me about SOC work, web security, or a contest you're running."}
-            </p>
-            <div className="mt-6">
-              <LocalTime place={location.split(",")[0]} />
-            </div>
-            <div className="mt-8 space-y-3">
+      <Section
+        id="contact"
+        title="Get in touch"
+        backdrop={<Sky rise />}
+        intro={
+          <p className="mt-3 max-w-xs text-text-secondary">
+            {profile.contactNote ?? "Write to me about SOC work, web security, or a contest you're running."}
+          </p>
+        }
+      >
+        <div className="grid gap-12 md:grid-cols-12 md:gap-10">
+          <div className="md:col-span-5">
+            <LocalTime place={location.split(",")[0]} />
+            <div className="mt-6 space-y-3">
               {profile.email ? <CopyEmail email={profile.email} /> : null}
               {profile.whatsapp ? (
                 <p className="text-sm text-text-secondary">
@@ -451,9 +387,11 @@ export default async function Home() {
                 </p>
               ) : null}
             </div>
-            <SocialLinks profile={profile} className="-ml-2.5 mt-6" />
+            <SocialLinks profile={profile} className="-ml-2.5 mt-5" />
           </div>
-          <ContactForm />
+          <div className="md:col-span-7">
+            <ContactForm />
+          </div>
         </div>
       </Section>
     </>

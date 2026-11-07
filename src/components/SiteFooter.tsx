@@ -29,7 +29,7 @@ export function SocialLinks({ profile, className = "" }: { profile: Profile; cla
 
 export function SiteFooter({ profile }: { profile: Profile }) {
   return (
-    <footer className="border-t border-border/70">
+    <footer>
       <div className="container-page flex flex-col gap-4 py-8 text-sm text-text-tertiary sm:flex-row sm:items-center sm:justify-between">
         <p>
           © {new Date().getFullYear()} {profile.name}

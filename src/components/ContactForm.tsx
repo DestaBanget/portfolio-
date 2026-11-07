@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 type SendState = "idle" | "sending" | "sent" | "failed";
 
 const fieldClass =
-  "mt-1.5 w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-text-primary outline-none transition-colors placeholder:text-text-muted hover:border-text-muted focus-visible:border-accent focus-visible:outline-none";
+  "mt-1 w-full border-0 border-b border-text-primary/45 bg-transparent py-2.5 text-lg text-text-primary outline-none transition-colors placeholder:text-text-muted hover:border-text-primary/80 focus-visible:border-accent focus-visible:outline-none";
 
 export function ContactForm() {
   const [state, setState] = useState<SendState>("idle");
@@ -42,7 +42,7 @@ export function ContactForm() {
       </label>
       <label className="block text-sm font-medium">
         Message
-        <textarea name="message" required rows={5} className={`${fieldClass} resize-y`} />
+        <textarea name="message" required rows={7} className={`${fieldClass} resize-y`} />
       </label>
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-3 pt-1">

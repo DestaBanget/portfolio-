@@ -29,7 +29,7 @@ const markdown: Components = {
     </pre>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="mb-5 border-l-2 border-accent bg-surface py-3 pl-5 pr-4 [&_p]:mb-0">{children}</blockquote>
+    <blockquote className="mb-5 border-l-2 border-border bg-surface py-3 pl-5 pr-4 [&_p]:mb-0">{children}</blockquote>
   ),
   table: ({ children }) => (
     <div className="mb-6 overflow-x-auto rounded-xl border border-border">
@@ -77,20 +77,12 @@ export default async function WriteupRoomPage({ params }: RoomPageProps) {
         <Link href="/writeups" className="inline-flex min-h-11 items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary">
           <ArrowRight className="rotate-180" /> All writeups
         </Link>
-        <h1 className="mt-6 text-3xl font-semibold tracking-tight md:text-5xl">{room.title}</h1>
-        <p className="mt-4 text-text-secondary">{meta.join(" · ")}</p>
-        {tags.length > 0 ? (
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <li key={tag} className="rounded-md border border-border bg-surface-raised/60 px-2.5 py-1 text-sm text-text-secondary">
-                {tag}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        <h1 className="mt-6 text-2xl font-semibold tracking-tight md:text-4xl">{room.title}</h1>
+        <p className="mt-4 text-text-secondary">{meta.join(", ")}</p>
+        {tags.length > 0 ? <p className="mt-2 text-sm text-text-tertiary">{tags.join(", ")}</p> : null}
       </header>
 
-      <div className="mx-auto mt-10 max-w-3xl border-t border-border pt-10 text-[1.0625rem] [&>*:first-child]:mt-0">
+      <div className="mx-auto mt-10 max-w-3xl pt-4 text-[1.0625rem] [&>*:first-child]:mt-0">
         {room.content ? (
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdown}>
             {room.content}

@@ -137,7 +137,7 @@ function DesktopNav({ current, onHome }: { current: string | null; onHome: boole
       <ul ref={listRef} className="relative flex items-center" onMouseLeave={() => setHovered(null)}>
         <li
           aria-hidden
-          className="nav-glide absolute inset-y-0 left-0 rounded-full bg-surface-raised"
+          className="nav-glide absolute inset-y-0 left-0 rounded-full bg-text-primary/10"
           style={{ width: box?.w ?? 0, transform: `translateX(${box?.x ?? 0}px)`, opacity: box ? 1 : 0 }}
         />
         {links.map((link) => (
@@ -183,10 +183,11 @@ export function SiteHeader({ name }: { name: string }) {
   return (
     <header
       data-hidden={hidden && !open ? "" : undefined}
-      data-scrolled={scrolled || open ? "" : undefined}
-      className="site-header sticky top-0 z-40 border-b border-transparent transition-[transform,background-color,border-color] duration-300 ease-out data-[hidden]:-translate-y-full data-[scrolled]:border-border/60 data-[scrolled]:bg-bg/90 data-[scrolled]:backdrop-blur"
+      data-scrolled={scrolled && !open ? "" : undefined}
+      data-open={open ? "" : undefined}
+      className="site-header sticky top-0 z-40 transition-[transform,background-color] duration-300 ease-out data-[hidden]:-translate-y-full data-[open]:bg-bg/95 data-[open]:backdrop-blur-md data-[scrolled]:bg-bg/85 data-[scrolled]:backdrop-blur-md"
     >
-      <span aria-hidden className="scroll-progress absolute inset-x-0 bottom-[-1px] h-px origin-left bg-accent" />
+      <span aria-hidden className="scroll-progress absolute inset-x-0 bottom-0 h-0.5 origin-left bg-accent" />
       <div className="container-page flex h-16 items-center justify-between gap-6">
         <Link href="/" className="group flex items-baseline gap-2">
           <span className="font-semibold tracking-tight">{shortName}</span>
@@ -221,10 +222,9 @@ export function SiteHeader({ name }: { name: string }) {
                   onHome={pathname === "/"}
                   onClick={() => setOpen(false)}
                   aria-current={current === link.id ? "true" : undefined}
-                  className="flex min-h-14 items-center justify-between border-b border-border/60 text-2xl font-medium tracking-tight text-text-secondary hover:text-text-primary aria-[current]:text-text-primary"
+                  className="flex min-h-12 items-center text-xl font-medium tracking-tight text-text-secondary hover:text-text-primary aria-[current]:text-accent-text"
                 >
                   {link.label}
-                  {current === link.id ? <span aria-hidden className="size-1.5 rounded-full bg-accent" /> : null}
                 </NavLink>
               </li>
             ))}

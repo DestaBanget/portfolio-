@@ -19,15 +19,9 @@ export function LocalTime({ place }: { place: string }) {
   // Rendering the time on the server would show the build's clock, so it waits for the browser.
   if (!time) return null;
 
-  const [hours, minutes] = time.split(":");
-
   return (
     <p className="flex items-baseline gap-3 text-sm text-text-tertiary">
-      <span className="font-mono text-2xl text-text-primary tabular-nums">
-        {hours}
-        <span className="clock-colon">:</span>
-        {minutes}
-      </span>
+      <span className="text-2xl font-semibold tabular-nums tracking-tight text-text-primary">{time}</span>
       <span>in {place} (WIB)</span>
     </p>
   );
