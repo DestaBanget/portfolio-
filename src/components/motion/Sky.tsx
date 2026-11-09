@@ -45,23 +45,31 @@ float fbm(vec2 p) {
 void main() {
   vec2 uv = gl_FragCoord.xy / uResolution;
   vec2 p = vec2(uv.x * min(uResolution.x / uResolution.y, 2.2), uv.y);
-  float t = uTime * 0.04;
+  float t = uTime * 0.085;
 
   vec2 warp = vec2(fbm(p * 1.3 + vec2(0.0, t)), fbm(p * 1.3 + vec2(5.2, -t)));
-  float n = fbm(p * 1.5 + warp * 2.0 + vec2(t * 0.6, 0.0));
+  float n = fbm(p * 1.5 + warp * 2.6 + vec2(t * 0.6, 0.0));
 
   float s = (uv.x + mix(uv.y, 1.0 - uv.y, uRise)) * 0.5;
   s += (n - 0.5) * 0.42;
   s += mix(-0.04, 0.14, uProgress);
-  s += 0.07 * (1.0 - min(distance(uv, uPointer) * 2.2, 1.0));
+  s += 0.1 * (1.0 - min(distance(uv, uPointer) * 2.2, 1.0));
 
   vec3 color = mix(uMain, uSecond, smoothstep(0.3, 0.62, s));
   color = mix(color, uMid, smoothstep(0.56, 0.82, s));
   color = mix(color, uAccent, smoothstep(0.82, 1.04, s));
 
+  // An aurora ribbon winds across the sky and slowly travels, shimmering along its length. It fades out on the
+  // left, so the text there keeps its dark ground.
+  float y = mix(uv.y, 1.0 - uv.y, uRise);
+  float ribbonY = 0.66 + 0.1 * sin(uv.x * 3.2 + uTime * 0.22) + (n - 0.5) * 0.3;
+  float ribbon = exp(-pow((y - ribbonY) / 0.07, 2.0)) * smoothstep(0.2, 0.85, uv.x);
+  ribbon *= 0.55 + 0.45 * noise(vec2(uv.x * 9.0 - uTime * 0.45, uTime * 0.15));
+  color = mix(color, uAccent, ribbon * 0.38);
+
   // Faint vertical streaks give the ramp a surface, like the curtains of an aurora.
   float streak = mix(0.07, 0.014, dot(uMain, vec3(0.333)));
-  color *= 1.0 + (noise(vec2(uv.x * 150.0, 2.0)) - 0.5) * streak;
+  color *= 1.0 + (noise(vec2(uv.x * 150.0 + uTime * 0.8, 2.0)) - 0.5) * streak;
 
   // A little dither keeps the long dark ramps from banding.
   color += (hash(gl_FragCoord.xy + fract(uTime)) - 0.5) * (2.5 / 255.0);

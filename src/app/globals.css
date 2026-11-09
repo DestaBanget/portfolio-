@@ -4,42 +4,43 @@
 
 /*
  * Colour tokens are stored as RGB channels so Tailwind opacity modifiers
- * (bg-accent/10, border-border/50) work. Deep navy (main) carries the page.
- * Ice cyan (second) carries the company names, the colour pools and the crest
- * of the skies. Mango (accent) is the warm colour that collides with all that
- * blue: the buttons, the figures, a first place, the marker under the intro,
- * hover marks, the rule and glint of the section titles. It stays sharp, small
- * and never becomes a haze, so it reads as a signal rather than a second theme.
+ * (bg-accent/10, border-border/50) work. Obsidian black (#111217, main) carries
+ * the page. Cornflower (#7DA8F5, second) is a light cool blue that sits inside the black:
+ * company names, the colour pools and the crest of the skies. Fire orange
+ * (#FF5F1F, accent) is the signal that collides with all of it: the buttons, the
+ * figures, a first place, the marker under the intro, hover marks, the rule and
+ * glint of the section titles. It stays sharp and small, never a haze.
  */
 :root,
 html.dark {
-  --bg: 10 18 42;
-  --surface: 16 26 56;
-  --surface-raised: 23 35 70;
-  --border: 38 52 92;
-  --text-primary: 246 248 252;
-  --text-secondary: 208 218 240;
-  --text-tertiary: 168 182 214;
-  --text-muted: 136 150 186;
-  --accent: 255 178 30;
-  --accent-light: 255 196 84;
-  --accent-ink: 10 18 42;
+  --bg: 17 18 23;
+  --surface: 24 26 33;
+  --surface-raised: 32 35 44;
+  --border: 46 50 64;
+  --text-primary: 240 242 246;
+  --text-secondary: 198 204 216;
+  --text-tertiary: 158 166 182;
+  --text-muted: 126 134 150;
+  --accent: 255 95 31;
+  --accent-light: 255 138 61;
+  /* Obsidian on the flame keeps button labels readable; white would fall under 4.5:1. */
+  --accent-ink: 17 18 23;
   /* The accent as text and fine marks. On the dark ground it is the accent itself. */
-  --accent-text: 255 178 30;
+  --accent-text: 255 95 31;
   /* The marker under highlighted words: a fine stroke on dark, a highlighter band on light. */
   --mark-h: 0.14em;
   --mark-color: rgb(var(--accent));
-  --second: 98 200 255;
-  --second-light: 150 220 255;
-  --second-ink: 10 18 42;
-  --danger: 252 129 129;
-  --sky-main: 10 18 42;
-  --sky-second: 18 40 100;
-  --sky-mid: 30 96 200;
-  --sky-accent: 72 176 240;
+  --second: 125 168 245;
+  --second-light: 170 198 250;
+  --second-ink: 17 18 23;
+  --danger: 255 120 140;
+  --sky-main: 17 18 23;
+  --sky-second: 24 34 64;
+  --sky-mid: 56 92 180;
+  --sky-accent: 125 168 245;
   /* How strongly the section washes tint the ground. */
-  --wash-strength: 0.3;
-  --wash-royal: 37 99 235;
+  --wash-strength: 0.22;
+  --wash-royal: 70 115 225;
   /* Strong curves: ease-out for things arriving, in-out for things moving on screen. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -47,36 +48,37 @@ html.dark {
 }
 
 /*
- * Light is its own design, not the dark page with the lights on: a cool daylight
- * ground, navy ink (the main colour carried over as type), a brighter daylight sky,
- * mango kept for fills, a deeper amber for accent text and fine marks, and the
- * underline under key words turned into a highlighter band.
+ * Light is its own design, not the dark page with the lights on: a muted stone
+ * ground, obsidian ink, a deep azure for the second colour, and coral rose as
+ * the accent, so it reads apart from the dark page's flame. Rose fills carry
+ * obsidian text; a deep crimson rose takes accent text and fine marks, and the
+ * underline under key words turns into a highlighter band.
  */
 html.light {
-  --bg: 240 244 250;
-  --surface: 230 237 248;
-  --surface-raised: 219 228 244;
-  --border: 198 210 232;
-  --text-primary: 10 18 42;
-  --text-secondary: 38 50 80;
-  --text-tertiary: 66 80 112;
-  --text-muted: 80 92 122;
-  --accent: 255 178 30;
-  --accent-light: 255 196 84;
-  --accent-ink: 10 18 42;
-  --accent-text: 150 82 0;
+  --bg: 228 225 218;
+  --surface: 218 214 206;
+  --surface-raised: 207 203 194;
+  --border: 188 182 171;
+  --text-primary: 17 18 23;
+  --text-secondary: 46 47 54;
+  --text-tertiary: 74 75 84;
+  --text-muted: 84 85 94;
+  --accent: 242 84 107;
+  --accent-light: 247 124 142;
+  --accent-ink: 17 18 23;
+  --accent-text: 176 30 66;
   --mark-h: 0.42em;
-  --mark-color: rgb(var(--accent) / 0.55);
-  --second: 3 105 161;
-  --second-light: 3 105 161;
+  --mark-color: rgb(var(--accent) / 0.35);
+  --second: 15 95 192;
+  --second-light: 15 95 192;
   --second-ink: 255 255 255;
   --danger: 185 28 28;
-  --sky-main: 240 244 250;
-  --sky-second: 205 222 250;
-  --sky-mid: 140 180 248;
-  --sky-accent: 120 205 250;
-  --wash-strength: 0.32;
-  --wash-royal: 70 140 250;
+  --sky-main: 228 225 218;
+  --sky-second: 208 218 234;
+  --sky-mid: 138 174 225;
+  --sky-accent: 40 112 202;
+  --wash-strength: 0.18;
+  --wash-royal: 15 95 192;
   color-scheme: light;
 }
 
@@ -426,11 +428,11 @@ html.light {
 
   /* The colour pools drift slowly and out of step, so the ground keeps moving while the page is read. */
   .wash::before {
-    animation: drift-a 18s ease-in-out infinite alternate;
+    animation: drift-a 11s ease-in-out infinite alternate;
   }
 
   .wash::after {
-    animation: drift-b 14s ease-in-out infinite alternate;
+    animation: drift-b 9s ease-in-out infinite alternate;
   }
 
   /* Where the browser can tie them to scroll, the two pools also slide past each other as the section passes. */
@@ -442,14 +444,14 @@ html.light {
 
     .wash::before {
       animation:
-        drift-a 18s ease-in-out infinite alternate,
+        drift-a 11s ease-in-out infinite alternate,
         slide-up linear both;
       animation-timeline: auto, --wash;
     }
 
     .wash::after {
       animation:
-        drift-b 14s ease-in-out infinite alternate,
+        drift-b 9s ease-in-out infinite alternate,
         slide-down linear both;
       animation-timeline: auto, --wash;
     }
@@ -570,8 +572,8 @@ html.light {
   }
 
   /*
-   * Page changes: the header holds still, the old page sinks away quickly and
-   * the new one settles in. Shared names let a heading travel between pages.
+   * Page changes: the header holds still and the two pages cross-fade over the same short span, so the ground
+   * never shows through between them. Shared names let a heading travel between pages.
    */
   .site-header {
     view-transition-name: site-header;
@@ -586,11 +588,11 @@ html.light {
   }
 
   ::view-transition-old(page) {
-    animation: page-out 160ms cubic-bezier(0.4, 0, 1, 1) both;
+    animation: page-out 220ms ease both;
   }
 
   ::view-transition-new(page) {
-    animation: page-in 460ms cubic-bezier(0.2, 0.7, 0.2, 1) 60ms both;
+    animation: page-in 220ms ease both;
   }
 
   ::view-transition-group(writeups-title) {
@@ -734,15 +736,12 @@ html.light {
 @keyframes page-out {
   to {
     opacity: 0;
-    transform: translateY(-6px);
   }
 }
 
 @keyframes page-in {
   from {
     opacity: 0;
-    transform: translateY(14px);
-    filter: blur(3px);
   }
 }
 
